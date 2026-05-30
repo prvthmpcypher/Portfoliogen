@@ -1228,6 +1228,18 @@ body.dark-theme .doc-card__meta {
   flex-wrap: wrap;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .skip-link {
   position: absolute;
   left: -999px;
@@ -1395,5 +1407,58 @@ body.dark-theme .doc-card__meta {
 
   .footer__bottom {
     display: grid;
+  }
+}
+
+@media (max-width: 320px) {
+  .bd-grid,
+  .page-shell,
+  .section-shell,
+  .hero,
+  .page-hero,
+  .features-grid,
+  .templates-grid,
+  .pricing-cards,
+  .testimonials,
+  .ecosystem-grid,
+  .work__container,
+  .docs-grid,
+  .work__filters,
+  .about-layout,
+  .contact-layout,
+  .cta-section,
+  .footer__container,
+  .footer__bottom,
+  .metrics-grid {
+    width: min(100% - 20px, 1160px);
+  }
+
+  .hero h1,
+  .page-hero h1 {
+    font-size: 2.1rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .bd-grid,
+  .page-shell,
+  .section-shell,
+  .hero,
+  .page-hero,
+  .features-grid,
+  .templates-grid,
+  .pricing-cards,
+  .testimonials,
+  .ecosystem-grid,
+  .work__container,
+  .docs-grid,
+  .work__filters,
+  .about-layout,
+  .contact-layout,
+  .cta-section,
+  .footer__container,
+  .footer__bottom,
+  .metrics-grid {
+    width: min(1240px, calc(100% - 64px));
   }
 }

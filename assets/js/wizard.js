@@ -326,9 +326,9 @@ function renderBlockCanvas() {
             + '<div class="canvas-block__main"><span class="palette-icon">' + reg.icon + '</span><span class="canvas-block__name">' + reg.label + '</span></div>'
             + '<div class="canvas-block__controls">'
             + '<select class="canvas-col-select" data-action="cols"><option value="4">4 col</option><option value="6">6 col</option><option value="8">8 col</option><option value="12">12 col</option></select>'
-            + '<button type="button" class="btn btn-secondary btn-icon" data-action="up"' + (index === 0 ? ' disabled' : '') + '><i class="bx bx-up-arrow-alt"></i></button>'
-            + '<button type="button" class="btn btn-secondary btn-icon" data-action="down"' + (index === sorted.length - 1 ? ' disabled' : '') + '><i class="bx bx-down-arrow-alt"></i></button>'
-            + '<button type="button" class="btn btn-danger btn-icon" data-action="remove"><i class="bx bx-x"></i></button>'
+            + '<button type="button" class="btn btn-secondary btn-icon" data-action="up" aria-label="Move block up"' + (index === 0 ? ' disabled' : '') + '><i class="bx bx-up-arrow-alt"></i></button>'
+            + '<button type="button" class="btn btn-secondary btn-icon" data-action="down" aria-label="Move block down"' + (index === sorted.length - 1 ? ' disabled' : '') + '><i class="bx bx-down-arrow-alt"></i></button>'
+            + '<button type="button" class="btn btn-danger btn-icon" data-action="remove" aria-label="Remove block"><i class="bx bx-x"></i></button>'
             + '</div></div>';
     }).join('');
     canvas.querySelectorAll('.canvas-block').forEach(function(row) {
@@ -434,9 +434,9 @@ function renderEducationList() {
     list.innerHTML = schema.education.map(function(item, index) {
         return '<article class="entry-card" draggable="true" data-index="' + index + '">'
             + '<div class="entry-card__head"><span class="entry-card__title"><i class="bx bx-grid-vertical drag-handle"></i> Education ' + (index + 1) + '</span><div class="button-row">'
-            + '<button type="button" class="btn btn-secondary btn-icon" data-action="up"' + (index === 0 ? ' disabled' : '') + '><i class="bx bx-up-arrow-alt"></i></button>'
-            + '<button type="button" class="btn btn-secondary btn-icon" data-action="down"' + (index === schema.education.length - 1 ? ' disabled' : '') + '><i class="bx bx-down-arrow-alt"></i></button>'
-            + '<button type="button" class="btn btn-danger btn-icon" data-action="delete"><i class="bx bx-trash"></i></button></div></div>'
+            + '<button type="button" class="btn btn-secondary btn-icon" data-action="up" aria-label="Move education entry up"' + (index === 0 ? ' disabled' : '') + '><i class="bx bx-up-arrow-alt"></i></button>'
+            + '<button type="button" class="btn btn-secondary btn-icon" data-action="down" aria-label="Move education entry down"' + (index === schema.education.length - 1 ? ' disabled' : '') + '><i class="bx bx-down-arrow-alt"></i></button>'
+            + '<button type="button" class="btn btn-danger btn-icon" data-action="delete" aria-label="Delete education entry"><i class="bx bx-trash"></i></button></div></div>'
             + '<div class="field-row"><div class="field"><label>Institution name</label><input data-field="institution" value="' + esc(item.institution) + '"></div><div class="field"><label>Degree / Course name</label><input data-field="degree" value="' + esc(item.degree) + '"></div></div>'
             + '<div class="field-row"><div class="field"><label>Field of study</label><input data-field="field" value="' + esc(item.field) + '"></div><div class="field"><label>Grade / GPA</label><input data-field="grade" value="' + esc(item.grade) + '"></div></div>'
             + '<div class="field-row"><div class="field"><label>Start year</label><input type="number" min="1900" max="2100" data-field="startYear" value="' + esc(item.startYear) + '"></div><div class="field"><label>End year</label><input data-field="endYear" value="' + esc(item.endYear) + '" placeholder="Present"></div></div>'
@@ -505,9 +505,9 @@ function renderProjectList() {
     list.innerHTML = projects.map(function(project, index) {
         return '<article class="entry-card" draggable="true" data-index="' + index + '">'
             + '<div class="entry-card__head"><span class="entry-card__title"><i class="bx bx-grid-vertical drag-handle"></i> Project ' + (index + 1) + '</span><div class="button-row">'
-            + '<button type="button" class="btn btn-secondary btn-icon" data-action="up"' + (index === 0 ? ' disabled' : '') + '><i class="bx bx-up-arrow-alt"></i></button>'
-            + '<button type="button" class="btn btn-secondary btn-icon" data-action="down"' + (index === projects.length - 1 ? ' disabled' : '') + '><i class="bx bx-down-arrow-alt"></i></button>'
-            + '<button type="button" class="btn btn-danger btn-icon" data-action="delete"><i class="bx bx-trash"></i></button></div></div>'
+            + '<button type="button" class="btn btn-secondary btn-icon" data-action="up" aria-label="Move project up"' + (index === 0 ? ' disabled' : '') + '><i class="bx bx-up-arrow-alt"></i></button>'
+            + '<button type="button" class="btn btn-secondary btn-icon" data-action="down" aria-label="Move project down"' + (index === projects.length - 1 ? ' disabled' : '') + '><i class="bx bx-down-arrow-alt"></i></button>'
+            + '<button type="button" class="btn btn-danger btn-icon" data-action="delete" aria-label="Delete project"><i class="bx bx-trash"></i></button></div></div>'
             + '<div class="field-row"><div class="field"><label>Title</label><input data-field="title" value="' + esc(project.title) + '"></div><div class="field"><label>Category</label><input data-field="category" value="' + esc(project.category) + '"></div></div>'
             + '<div class="field"><label>Description</label><textarea data-field="desc">' + esc(project.desc) + '</textarea></div>'
             + '<div class="field-row"><div class="field"><label>Live URL</label><input data-field="link" value="' + esc(project.link) + '"></div><div class="field"><label>Source URL</label><input data-field="source" value="' + esc(project.source) + '"></div></div>'

@@ -3,10 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Use PortfolioGen to build, preview, customize, and download a responsive portfolio website from your browser.">
+    <meta name="robots" content="noindex,follow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="theme-color" content="#0C9B70">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; connect-src 'self' https://api.github.com; base-uri 'self'; form-action 'self'; object-src 'none';">
+    <meta property="og:title" content="Generator - PortfolioGen by Cypher Labs">
+    <meta property="og:description" content="Build a professional portfolio locally in your browser, then export a deployable ZIP.">
+    <meta property="og:image" content="https://prvthmpcypher.github.io/PortfolioGen--Cypher-Labs/assets/img/Cypher_Porfolio_Generator-no%20bg.png">
+    <meta property="og:url" content="https://prvthmpcypher.github.io/PortfolioGen--Cypher-Labs/generate.html">
+    <meta property="og:type" content="website">
     <title>ProfileGen - Portfolio Generator by Cypher Labs</title>
-    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="canonical" href="https://prvthmpcypher.github.io/PortfolioGen--Cypher-Labs/generate.html">
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         :root {
             --primary: #0C9B70;
@@ -145,6 +156,12 @@
         .wizard-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .85rem 1.25rem; background: var(--surface); border-top: 1px solid var(--border); }
         .toast { position: fixed; right: 1rem; bottom: 1rem; z-index: 120; display: none; padding: .75rem .9rem; color: #fff; background: #172033; border-left: 4px solid var(--primary); border-radius: var(--radius); box-shadow: 0 12px 32px rgba(15,23,42,.2); }
         .toast.visible { display: block; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        .skip-link:focus { width: auto; height: auto; margin: 0; clip: auto; top: .75rem; left: .75rem; z-index: 200; padding: .65rem 1rem; color: #fff; background: #172033; border-radius: var(--radius); }
+        .gen-footer { margin: 2rem 0 5rem; padding: 2rem 1rem; color: #fff; background: #172033; }
+        .gen-footer__inner { width: min(1100px, calc(100% - 28px)); margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+        .gen-footer__links { display: flex; flex-wrap: wrap; gap: .8rem; }
+        .gen-footer a { color: #d1fae5; font-weight: 800; }
         @media (min-width: 1100px) {
             .generator-shell.has-preview { display: grid; grid-template-columns: 420px minmax(0, 1fr); height: calc(100vh - 129px); overflow: hidden; }
             .generator-shell.has-preview .wizard-wrap { width: 100%; margin: 0; padding: 1rem; overflow: auto; }
@@ -166,7 +183,8 @@
     </style>
 </head>
 <body>
-    <header class="gen-header">
+    <a href="#main-content" class="sr-only skip-link">Skip to content</a>
+    <header class="gen-header" role="banner">
         <a href="index.html" class="gen-logo">
             <img src="assets/img/svg/Cypher_Porfolio_Generator-no bg.svg" alt="ProfileGen" onerror="this.style.display='none'">
             <span>ProfileGen</span>
@@ -185,7 +203,8 @@
         </div>
     </div>
 
-    <div class="generator-shell" id="generatorShell">
+    <main class="generator-shell" id="generatorShell" role="main" aria-labelledby="main-content">
+        <h1 class="sr-only" id="main-content">Portfolio Generator</h1>
         <div class="wizard-wrap">
             <div class="step" data-step="1">
                 <div class="step-header">
@@ -502,7 +521,7 @@
                 <iframe id="livePreviewFrame" title="Live portfolio preview"></iframe>
             </div>
         </aside>
-    </div>
+    </main>
 
     <button type="button" class="btn btn-primary floating-preview" id="openPreviewBtn"><i class="bx bx-show"></i> Preview</button>
     <div class="preview-modal" id="previewModal" aria-hidden="true">
@@ -520,7 +539,19 @@
         <button type="button" class="btn-nav btn-nav--next" id="btnNext">Next <i class="bx bx-chevron-right"></i></button>
     </div>
 
-    <script src="assets/js/builder.js"></script>
-    <script src="assets/js/wizard.js"></script>
+    <footer class="gen-footer" role="contentinfo">
+        <div class="gen-footer__inner">
+            <div>&copy; 2026 PortfolioGen by Cypher Labs. All rights reserved.</div>
+            <nav class="gen-footer__links" aria-label="Legal links">
+                <a href="work.html#privacy">Privacy Policy</a>
+                <a href="work.html#terms">Terms of Service</a>
+                <a href="work.html#security">Security</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script defer src="assets/js/builder.js"></script>
+    <script defer src="assets/js/wizard.js"></script>
 </body>
 </html>

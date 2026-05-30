@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /generate.html
+
+Sitemap: https://prvthmpcypher.github.io/PortfolioGen--Cypher-Labs/sitemap.xml

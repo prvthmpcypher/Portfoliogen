@@ -279,14 +279,20 @@ function buildPageHead(schema, pageName, previewMode) {
         + '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
         + '<meta name="description" content="' + attr(m.tagline || m.bio || title) + '">'
         + '<meta name="author" content="' + attr(m.name || '') + '">'
+        + '<meta name="referrer" content="strict-origin-when-cross-origin">'
+        + '<meta name="theme-color" content="' + attr((schema.theme && schema.theme.primaryColor) || '#0C9B70') + '">'
+        + '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; connect-src \'self\' https://api.github.com; img-src \'self\' data: https:; style-src \'self\' \'unsafe-inline\' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src \'self\' https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src \'self\' \'unsafe-inline\' https://unpkg.com; base-uri \'self\'; form-action \'self\';">'
         + '<meta property="og:title" content="' + attr(title) + '">'
         + '<meta property="og:description" content="' + attr(m.tagline || '') + '">'
+        + '<meta property="og:image" content="' + attr((m.photoBase64 && m.photoBase64.indexOf('data:') === 0) ? m.photoBase64 : 'assets/img/profile.jpg') + '">'
+        + '<meta property="og:url" content="' + attr(schema.siteURL ? schema.siteURL.replace(/\/+$/, '') + '/' + pageName + '.html' : pageName + '.html') + '">'
         + '<meta property="og:type" content="website">'
         + '<meta name="twitter:card" content="summary">'
         + '<meta name="twitter:title" content="' + attr(title) + '">'
         + '<title>' + esc(label) + ' - ' + esc(m.name || 'Portfolio') + '</title>'
+        + (schema.siteURL ? '<link rel="canonical" href="' + attr(schema.siteURL.replace(/\/+$/, '') + '/' + pageName + '.html') + '">' : '')
         + '<link rel="icon" href="' + attr(getFaviconHref(schema)) + '">'
-        + '<link href="https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css" rel="stylesheet">'
+        + '<link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">'
         + (previewMode ? '<style>' + buildCSS(schema) + '</style>' : '<link rel="stylesheet" href="assets/css/styles.css">')
         + '</head><body>';
 }
@@ -326,8 +332,8 @@ function buildFooter(schema) {
 /* Builds generated script tags and skips them when previewing. */
 function buildScriptTags(schema, blocks) {
     var out = '';
-    if (schema.theme.animations.enabled) out += '<script src="https://unpkg.com/scrollreveal"><\/script>';
-    out += '<script src="assets/js/main.js"><\/script>';
+    if (schema.theme.animations.enabled) out += '<script defer src="https://unpkg.com/scrollreveal"><\/script>';
+    out += '<script defer src="assets/js/main.js"><\/script>';
     return out;
 }
 
@@ -347,7 +353,7 @@ function buildMainJS(schema, blocks) {
         out += 'document.querySelectorAll(".bento-block").forEach(card=>{card.addEventListener("mousemove",e=>{const r=card.getBoundingClientRect();const x=(e.clientX-r.left)/r.width-.5;const y=(e.clientY-r.top)/r.height-.5;card.style.transform=`perspective(900px) rotateX(${-y*5}deg) rotateY(${x*5}deg) translateY(-3px)`;});card.addEventListener("mouseleave",()=>card.style.transform="");});\n';
     }
     if (types.indexOf('githubFeed') !== -1) {
-        out += 'async function loadGithub(){const el=document.getElementById("gh-feed"),user=window.__GH_USER;if(!el||!user)return;try{const res=await fetch(`https://api.github.com/users/${user}/events/public?per_page=8`);const data=await res.json();el.innerHTML=data.slice(0,5).map(ev=>`<div class="gh-commit"><div class="gh-repo">${ev.repo.name}</div><div class="gh-msg">${(ev.payload.commits&&ev.payload.commits[0]&&ev.payload.commits[0].message)||ev.type}</div><div class="gh-date">${new Date(ev.created_at).toLocaleDateString()}</div></div>`).join("");}catch(e){el.innerHTML="<p class=\\"muted\\">Unable to load commits.</p>";}}loadGithub();\n';
+        out += 'const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/[\\u0027]/g,"&#039;");async function loadGithub(){const el=document.getElementById("gh-feed"),user=window.__GH_USER;if(!el||!user)return;try{const res=await fetch(`https://api.github.com/users/${encodeURIComponent(user)}/events/public?per_page=8`);const data=await res.json();el.innerHTML=data.slice(0,5).map(ev=>{const commit=ev.payload&&ev.payload.commits&&ev.payload.commits[0];return `<div class="gh-commit"><div class="gh-repo">${esc(ev.repo&&ev.repo.name)}</div><div class="gh-msg">${esc((commit&&commit.message)||ev.type)}</div><div class="gh-date">${esc(new Date(ev.created_at).toLocaleDateString())}</div></div>`;}).join("");}catch(e){el.innerHTML="<p class=\\"muted\\">Unable to load commits.</p>";}}loadGithub();\n';
     }
     if (schema.theme.pageTransitions) {
         out += 'document.body.classList.add("page-ready");document.addEventListener("click",e=>{const a=e.target.closest("a");if(!a||a.target||a.origin!==location.origin||!a.getAttribute("href").endsWith(".html"))return;e.preventDefault();document.body.classList.add("page-exit");setTimeout(()=>location.href=a.href,300);});\n';
