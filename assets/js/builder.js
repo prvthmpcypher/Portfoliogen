@@ -172,7 +172,7 @@ function buildNav(s,active){
   // Social in nav
   var navSocials='';
   (s.socials||[]).forEach(function(soc){
-    if(soc.inNav&&soc.url){navSocials+='<a href="'+attr(soc.url)+'" target="_blank" class="nav-social-link" aria-label="'+esc(soc.name)+'"><i class="bx '+esc(soc.icon)+'"></i></a>';}
+    if(soc.inNav&&soc.url){navSocials+='<a href="'+attr(soc.url)+'" target="_blank" class="nav-social-link social-shape-'+esc(soc.iconShape||'circle')+'" style="--social-color:'+attr(soc.iconColor||'var(--primary)')+'" aria-label="'+esc(soc.name)+'"><i class="bx '+esc(soc.icon)+'"></i></a>';}
   });
   var links=pages.filter(function(p){return p.enabled;}).map(function(p){
     var href=s.__preview?'#pg-page-'+p.name:p.name+'.html';var label=p.navLabel||p.label;
@@ -192,7 +192,7 @@ function buildNav(s,active){
 function buildFooter(s){
   var m=s.meta||{};var icons='';var pages=s.pages||[];var footer=s.footer||{};
   (s.socials||[]).forEach(function(soc){
-    if(soc.inFooter&&soc.url){icons+='<a href="'+attr(soc.url)+'" target="_blank" class="footer-social" aria-label="'+esc(soc.name)+'"><i class="bx '+esc(soc.icon)+'"></i></a>';}
+    if(soc.inFooter&&soc.url){icons+='<a href="'+attr(soc.url)+'" target="_blank" class="footer-social social-shape-'+esc(soc.iconShape||'circle')+'" style="--social-color:'+attr(soc.iconColor||'var(--primary)')+'" aria-label="'+esc(soc.name)+'"><i class="bx '+esc(soc.icon)+'"></i></a>';}
   });
   var pageLinks=pages.filter(function(p){return p.enabled;}).map(function(p){
     var href=s.__preview?'#pg-page-'+p.name:p.name+'.html';
@@ -222,7 +222,7 @@ var blockRenderers={
     var m=s.meta||{};var t=s.theme||{};var img=getPhotoSrc(s);
     var socials='';
     (s.socials||[]).forEach(function(soc){
-      if(soc.inHero&&soc.url){socials+='<a href="'+attr(soc.url)+'" target="_blank" class="hero-social"><i class="bx '+esc(soc.icon)+'"></i></a>';}
+      if(soc.inHero&&soc.url){socials+='<a href="'+attr(soc.url)+'" target="_blank" class="hero-social social-shape-'+esc(soc.iconShape||'circle')+'" style="--social-color:'+attr(soc.iconColor||'var(--primary)')+'"><i class="bx '+esc(soc.icon)+'"></i></a>';}
     });
     var contactHref=(s.pages||[]).some(function(p){return p.name==='contact'&&p.enabled;})?'contact.html':'#contact';
     var actions='<a href="'+contactHref+'" class="btn btn-primary">Get In Touch</a><a href="#projects" class="btn btn-outline">View Work</a>';
@@ -264,17 +264,44 @@ var blockRenderers={
   },
   skills:function(block,s){
     var skills=block.data&&block.data.skills&&block.data.skills.length?block.data.skills:[];
-    var bars=skills.map(function(sk){
+    var settings=(block.data&&block.data.settings)||(s.theme&&s.theme.skillDisplay)||{};
+    var mode=settings.mode||'bars';
+    var showCats=settings.showCategories!==false;
+    var shape=settings.badgeShape||'pill';
+    var search=settings.searchable?'<input type="search" class="skill-search" placeholder="Search skills..." aria-label="Search skills">':'';
+    var byCat={};
+    skills.forEach(function(sk){ var cat=sk.category||'General'; if(!byCat[cat])byCat[cat]=[]; byCat[cat].push(sk); });
+    function itemAttrs(sk){ return' data-skill-name="'+attr(sk.name||'')+'" data-skill-category="'+attr(sk.category||'General')+'"'; }
+    function barItem(sk){
       var lvl=clampPct(sk.level);var color=sk.color||'var(--primary)';
       return'<div class="skill-item">'+
         '<div class="skill-hd"><span class="skill-name">'+esc(sk.name)+'</span><span class="skill-pct">'+lvl+'%</span></div>'+
         '<div class="skill-bar"><div class="skill-fill" style="width:'+lvl+'%;background:'+esc(color)+'"></div></div>'+
-        (sk.category?'<span class="skill-cat">'+esc(sk.category)+'</span>':'')+
+        (showCats&&sk.category?'<span class="skill-cat">'+esc(sk.category)+'</span>':'')+
       '</div>';
-    }).join('');
-    return'<section class="bento-block block-skills" data-reveal>'+
+    }
+    var body='';
+    if(mode==='cards'){
+      body='<div class="skills-card-grid">'+skills.map(function(sk){ var lvl=clampPct(sk.level); return'<article class="skill-card-view"'+itemAttrs(sk)+' style="--skill-color:'+attr(sk.color||'var(--primary)')+'"><strong>'+esc(sk.name)+'</strong>'+(showCats&&sk.category?'<span>'+esc(sk.category)+'</span>':'')+'<b>'+lvl+'%</b></article>'; }).join('')+'</div>';
+    } else if(mode==='chips'){
+      body='<div class="skills-chip-cloud">'+skills.map(function(sk){ return'<span class="skill-chip skill-chip-'+esc(shape)+'"'+itemAttrs(sk)+' style="--skill-color:'+attr(sk.color||'var(--primary)')+'">'+esc(sk.name)+(showCats&&sk.category?' <small>'+esc(sk.category)+'</small>':'')+'</span>'; }).join('')+'</div>';
+    } else if(mode==='tabs'){
+      body='<div class="skills-tabs">'+Object.keys(byCat).map(function(cat,i){ return'<details '+(i===0?'open':'')+'><summary>'+esc(cat)+'</summary><div>'+byCat[cat].map(function(sk){ return'<span class="skill-chip skill-chip-'+esc(shape)+'"'+itemAttrs(sk)+'>'+esc(sk.name)+' '+clampPct(sk.level)+'%</span>'; }).join('')+'</div></details>'; }).join('')+'</div>';
+    } else if(mode==='accordion'){
+      body='<div class="skills-accordion">'+skills.map(function(sk,i){ return'<details '+(i===0?'open':'')+itemAttrs(sk)+'><summary>'+esc(sk.name)+'<span>'+clampPct(sk.level)+'%</span></summary><p>'+(showCats?esc(sk.category||'General'):'Skill')+' proficiency shown with expandable context.</p>'+barItem(sk)+'</details>'; }).join('')+'</div>';
+    } else if(mode==='radial'){
+      body='<div class="skills-radial-grid">'+skills.map(function(sk){ var lvl=clampPct(sk.level); return'<div class="skill-radial"'+itemAttrs(sk)+' style="--pct:'+lvl+'%;--skill-color:'+attr(sk.color||'var(--primary)')+'"><span>'+lvl+'%</span><strong>'+esc(sk.name)+'</strong>'+(showCats&&sk.category?'<small>'+esc(sk.category)+'</small>':'')+'</div>'; }).join('')+'</div>';
+    } else if(mode==='table'){
+      body='<div class="skills-table">'+skills.map(function(sk){ var lvl=clampPct(sk.level); return'<div class="skills-row"'+itemAttrs(sk)+'><strong>'+esc(sk.name)+'</strong><span>'+(showCats?esc(sk.category||'General'):'')+'</span><b>'+lvl+'%</b><div class="skill-bar"><div class="skill-fill" style="width:'+lvl+'%;background:'+attr(sk.color||'var(--primary)')+'"></div></div></div>'; }).join('')+'</div>';
+    } else if(mode==='badges'){
+      body='<div class="skills-badges">'+skills.map(function(sk){ return'<button type="button" class="skill-badge skill-chip-'+esc(shape)+'"'+itemAttrs(sk)+' style="--skill-color:'+attr(sk.color||'var(--primary)')+'"><span>'+esc(sk.name)+'</span><b>'+clampPct(sk.level)+'%</b>'+(showCats&&sk.category?'<small>'+esc(sk.category)+'</small>':'')+'</button>'; }).join('')+'</div>';
+    } else {
+      body='<div class="skills-list">'+skills.map(function(sk){ return'<div'+itemAttrs(sk)+'>'+barItem(sk)+'</div>'; }).join('')+'</div>';
+    }
+    return'<section class="bento-block block-skills skills-mode-'+esc(mode)+' '+(settings.animate?'skills-animated':'')+'" data-reveal>'+
       '<h2 class="block-title">Skills</h2>'+
-      '<div class="skills-list">'+(bars||'<p class="muted">Add skills in step 3.</p>')+'</div>'+
+      search+
+      (skills.length?body:'<p class="muted">Add skills in step 3.</p>')+
     '</section>';
   },
   education:function(block,s){
@@ -405,7 +432,7 @@ var blockRenderers={
   },
   socialLinks:function(block,s){
     var links=(s.socials||[]).filter(function(sc){return sc.url;}).map(function(sc){
-      return'<a href="'+attr(sc.url)+'" target="_blank" class="social-link-item">'+
+      return'<a href="'+attr(sc.url)+'" target="_blank" class="social-link-item social-shape-'+esc(sc.iconShape||'circle')+'" style="--social-color:'+attr(sc.iconColor||'var(--primary)')+'">'+
         '<i class="bx '+esc(sc.icon)+'"></i><span>'+esc(sc.name)+'</span>'+
         '<i class="bx bx-chevron-right" style="margin-left:auto;color:var(--muted)"></i>'+
       '</a>';
@@ -464,6 +491,7 @@ function buildCSS(s){
   var font=t.fontFamily||'Inter';
   var radius=t.borderRadius||'.75rem';
   var primary=t.primaryColor||'#0C9B70';var secondary=t.secondaryColor||'#042444';var accent=t.accentColor||'#1db88e';
+  var gradA=t.gradientColorA||primary, gradB=t.gradientColorB||accent, gradC=t.gradientColorC||secondary;
   var surface=t.surfaceColor||'#ffffff';
   var bg='#f8fafc';
   // Aesthetic overrides
@@ -474,10 +502,10 @@ function buildCSS(s){
     var gr=GRADIENTS.find(function(g){return g.id===t.gradientPreset;});
     if(gr&&gr.css)gradientCSS='body{background:'+gr.css+' fixed;background-size:cover;}';
   } else if(t.gradientType&&t.gradientType!=='none'){
-    if(t.gradientType==='linear') gradientCSS='body{background:linear-gradient('+((t.gradientDir||'135deg'))+','+primary+','+accent+','+secondary+') fixed;background-size:cover;}';
-    if(t.gradientType==='radial') gradientCSS='body{background:radial-gradient(circle at top left,'+primary+',transparent 42%),radial-gradient(circle at bottom right,'+accent+',transparent 38%),'+secondary+' fixed;background-size:cover;}';
-    if(t.gradientType==='conic') gradientCSS='body{background:conic-gradient(from 180deg at 50% 50%,'+primary+','+accent+','+secondary+','+primary+') fixed;background-size:cover;}';
-    if(t.gradientType==='mesh') gradientCSS='body{background:radial-gradient(at 20% 30%,'+primary+' 0%,transparent 45%),radial-gradient(at 80% 20%,'+accent+' 0%,transparent 40%),radial-gradient(at 50% 85%,'+secondary+' 0%,transparent 50%),#f8fafc fixed;background-size:cover;}';
+    if(t.gradientType==='linear') gradientCSS='body{background:linear-gradient('+((t.gradientDir||'135deg'))+','+gradA+','+gradB+','+gradC+') fixed;background-size:cover;}';
+    if(t.gradientType==='radial') gradientCSS='body{background:radial-gradient(circle at top left,'+gradA+',transparent 42%),radial-gradient(circle at bottom right,'+gradB+',transparent 38%),'+gradC+' fixed;background-size:cover;}';
+    if(t.gradientType==='conic') gradientCSS='body{background:conic-gradient(from 180deg at 50% 50%,'+gradA+','+gradB+','+gradC+','+gradA+') fixed;background-size:cover;}';
+    if(t.gradientType==='mesh') gradientCSS='body{background:radial-gradient(at 20% 30%,'+gradA+' 0%,transparent 45%),radial-gradient(at 80% 20%,'+gradB+' 0%,transparent 40%),radial-gradient(at 50% 85%,'+gradC+' 0%,transparent 50%),#f8fafc fixed;background-size:cover;}';
   }
   // Hero layout
   var heroLayoutCSS=getHeroLayoutCSS(t.heroLayout||'split');
@@ -514,7 +542,8 @@ function buildCSS(s){
     +'.nav-resume{border:1.5px solid var(--primary);padding:.32rem .65rem;border-radius:var(--radius);color:var(--primary)}\n'
     +'.nav-btns{display:flex;align-items:center;gap:.5rem}\n'
     +'.nav-social-link{width:32px;height:32px;display:grid;place-items:center;color:var(--muted);font-size:1.1rem;border-radius:50%;transition:all .15s}\n'
-    +'.nav-social-link:hover{color:var(--primary);background:rgba(12,155,112,.1)}\n'
+    +'.nav-social-link:hover{color:var(--social-color,var(--primary));background:color-mix(in srgb,var(--social-color,var(--primary)) 14%,transparent)}\n'
+    +'.social-shape-circle{border-radius:50%!important}.social-shape-square{border-radius:4px!important}.social-shape-soft{border-radius:12px!important}\n'
     +'.nav-theme-btn,.nav-toggle{border:0;background:transparent;cursor:pointer;color:var(--text);font-size:1.2rem;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;transition:all .15s}\n'
     +'.nav-theme-btn:hover,.nav-toggle:hover{background:var(--border)}\n'
     +'.nav-toggle{display:none}\n'
@@ -549,7 +578,7 @@ function buildCSS(s){
     +'.hero-actions{display:flex;gap:.65rem;flex-wrap:wrap;margin-bottom:1rem}\n'
     +'.hero-socials{display:flex;gap:.5rem}\n'
     +'.hero-social{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);display:grid;place-items:center;color:var(--muted);font-size:1.1rem;transition:all .15s}\n'
-    +'.hero-social:hover{border-color:var(--primary);color:var(--primary);background:rgba(12,155,112,.08)}\n'
+    +'.hero-social:hover{border-color:var(--social-color,var(--primary));color:var(--social-color,var(--primary));background:color-mix(in srgb,var(--social-color,var(--primary)) 12%,transparent)}\n'
     +'.hero-img-wrap{flex-shrink:0;position:relative;z-index:1}\n'
     +'.hero-img{width:200px;height:200px;border-radius:var(--radius);object-fit:cover;border:3px solid var(--primary);box-shadow:0 20px 60px rgba(12,155,112,.25)}\n'
     +'@media(max-width:640px){.block-hero{flex-direction:column;align-items:flex-start;min-height:auto}.hero-img{width:130px;height:130px}}\n'
@@ -568,6 +597,15 @@ function buildCSS(s){
     +'.skill-bar{height:6px;background:var(--border);border-radius:999px;overflow:hidden}\n'
     +'.skill-fill{height:100%;border-radius:999px;transition:width .6s cubic-bezier(.4,0,.2,1)}\n'
     +'.skill-cat{font-size:.7rem;color:var(--muted);margin-top:.2rem;display:block}\n'
+    +'.skill-search{width:100%;margin-bottom:1rem;padding:.7rem .85rem;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text)}\n'
+    +'.skills-card-grid,.skills-radial-grid,.skills-badges{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem}.skill-card-view{position:relative;padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);overflow:hidden}.skill-card-view::before{content:"";position:absolute;inset:0 0 auto;height:4px;background:var(--skill-color,var(--primary))}.skill-card-view strong,.skill-card-view span,.skill-card-view b{display:block}.skill-card-view b{margin-top:.65rem;color:var(--skill-color,var(--primary));font-size:1.35rem}\n'
+    +'.skills-chip-cloud{display:flex;flex-wrap:wrap;gap:.5rem}.skill-chip,.skill-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.48rem .72rem;border:1px solid color-mix(in srgb,var(--skill-color,var(--primary)) 35%,var(--border));background:color-mix(in srgb,var(--skill-color,var(--primary)) 12%,transparent);color:var(--text);font-weight:800;font-size:.82rem}.skill-chip small,.skill-badge small{color:var(--muted);font-weight:600}.skill-chip-pill{border-radius:999px}.skill-chip-square{border-radius:4px}.skill-chip-soft{border-radius:12px}\n'
+    +'.skills-tabs,.skills-accordion{display:grid;gap:.65rem}.skills-tabs details,.skills-accordion details{border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);padding:.75rem}.skills-tabs summary,.skills-accordion summary{cursor:pointer;font-weight:800;color:var(--primary)}.skills-tabs details>div{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.65rem}.skills-accordion summary{display:flex;justify-content:space-between;gap:1rem}.skills-accordion p{color:var(--muted);font-size:.85rem;margin:.55rem 0}\n'
+    +'.skill-radial{--pct:70%;display:grid;place-items:center;text-align:center;gap:.2rem;min-height:150px;padding:1rem;border-radius:var(--radius);background:conic-gradient(var(--skill-color,var(--primary)) var(--pct),var(--border) 0);position:relative}.skill-radial::before{content:"";position:absolute;inset:10px;border-radius:inherit;background:var(--surface)}.skill-radial>*{position:relative}.skill-radial span{font-weight:900;color:var(--skill-color,var(--primary));font-size:1.25rem}.skill-radial small{color:var(--muted)}\n'
+    +'.skills-table{display:grid;gap:.45rem}.skills-row{display:grid;grid-template-columns:1fr .8fr 44px 1fr;align-items:center;gap:.65rem;padding:.65rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius)}.skills-row span{color:var(--muted);font-size:.82rem}.skills-row b{color:var(--primary)}\n'
+    +'.skill-badge{position:relative;cursor:help;background:var(--bg)}.skill-badge b,.skill-badge small{opacity:0;position:absolute;left:50%;bottom:calc(100% + .45rem);transform:translateX(-50%) translateY(4px);white-space:nowrap;background:var(--text);color:var(--surface);padding:.25rem .45rem;border-radius:6px;transition:all .15s}.skill-badge:hover b,.skill-badge:hover small{opacity:1;transform:translateX(-50%) translateY(0)}.skill-badge small{bottom:calc(100% + 2rem)}\n'
+    +'.skills-animated.revealed .skill-fill{animation:skillGrow .8s ease both}.skills-animated.revealed .skill-card-view,.skills-animated.revealed .skill-chip,.skills-animated.revealed .skill-radial,.skills-animated.revealed .skill-badge{animation:skillPop .45s ease both}@keyframes skillGrow{from{width:0}}@keyframes skillPop{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}\n'
+    +'@media(max-width:640px){.skills-row{grid-template-columns:1fr}.skills-row .skill-bar{width:100%}}\n'
     // TIMELINE
     +'.timeline{position:relative;display:grid;gap:1.1rem;padding-left:1.5rem}\n'
     +'.timeline::before{content:"";position:absolute;left:.35rem;top:.2rem;bottom:.2rem;width:2px;background:linear-gradient(to bottom,var(--primary),var(--accent))}\n'
@@ -634,8 +672,8 @@ function buildCSS(s){
     // SOCIALS
     +'.socials-list{display:grid;gap:.6rem}\n'
     +'.social-link-item{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);font-weight:600;font-size:.88rem;transition:all .15s}\n'
-    +'.social-link-item i{font-size:1.2rem;color:var(--primary)}\n'
-    +'.social-link-item:hover{border-color:var(--primary);transform:translateX(4px)}\n'
+    +'.social-link-item i{font-size:1.2rem;color:var(--social-color,var(--primary))}\n'
+    +'.social-link-item:hover{border-color:var(--social-color,var(--primary));transform:translateX(4px)}\n'
     // GITHUB FEED
     +'.gh-feed{display:grid;gap:.5rem}\n'
     +'.gh-commit{border-left:3px solid var(--primary);padding:.55rem .7rem;background:var(--bg);border-radius:0 var(--radius) var(--radius) 0}\n'
@@ -662,7 +700,7 @@ function buildCSS(s){
     +'.footer-credit a{color:var(--accent);font-weight:800}\n'
     +'.footer-socials{display:flex;gap:.45rem}\n'
     +'.footer-social{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);display:grid;place-items:center;color:#fff;font-size:1.1rem;transition:all .15s}\n'
-    +'.footer-social:hover{background:var(--primary)}\n'
+    +'.footer-social:hover{background:var(--social-color,var(--primary))}\n'
     +'.pg-instructions{position:fixed;right:1rem;bottom:1rem;z-index:120;width:min(300px,calc(100vw - 2rem));padding:1rem 1rem 1rem 1.1rem;background:rgba(255,255,255,.95);color:var(--text);border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:var(--radius);box-shadow:0 18px 50px rgba(15,23,42,.16);backdrop-filter:blur(12px)}\n'
     +'body.dark .pg-instructions{background:rgba(30,41,59,.95)}.pg-instructions strong{display:block;margin-bottom:.3rem;color:var(--primary)}.pg-instructions p{font-size:.82rem;color:var(--muted);line-height:1.55}.pg-instructions-close{position:absolute;right:.45rem;top:.45rem;width:28px;height:28px;border:0;background:transparent;color:var(--muted);font-size:1.1rem;cursor:pointer;border-radius:50%}.pg-instructions-close:hover{background:var(--border);color:var(--text)}\n'
     +'@media(max-width:768px){.footer-inner{grid-template-columns:1fr}.footer-links{justify-content:flex-start}.pg-instructions{left:1rem;right:1rem;width:auto}}\n'
@@ -815,6 +853,8 @@ function buildMainJS(s,allBlocks){
   out+='const revealObs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add("revealed");revealObs.unobserve(e.target);}}),{threshold:.08});document.querySelectorAll("[data-reveal]").forEach(el=>revealObs.observe(el));\n';
   // Contact form
   out+='function handleContact(e){e.preventDefault();const m=document.getElementById("contactMsg");if(m){m.style.display="block";}}\n';
+  // Skill search filters
+  out+='document.querySelectorAll(".block-skills .skill-search").forEach(input=>input.addEventListener("input",()=>{const q=input.value.toLowerCase();input.closest(".block-skills").querySelectorAll("[data-skill-name]").forEach(el=>{const hay=((el.dataset.skillName||"")+" "+(el.dataset.skillCategory||"")).toLowerCase();el.style.display=hay.includes(q)?"":"none";});}));\n';
   // Floating instructions
   out+='const pgInst=document.getElementById("pgInstructions"),pgInstClose=document.getElementById("pgInstructionsClose");if(pgInst&&localStorage.getItem("pgInstructionsHidden")==="1")pgInst.remove();if(pgInstClose)pgInstClose.addEventListener("click",()=>{localStorage.setItem("pgInstructionsHidden","1");pgInst&&pgInst.remove();});\n';
   // Blob preview multi-page navigation

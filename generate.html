@@ -6,7 +6,7 @@
 <title>PortfolioGen — Advanced Builder · Cypher Labs</title>
 <link rel="icon" href="assets/img/svg/Cypher_Porfolio_Generator-no bg.svg" type="image/svg+xml">
 <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&family=Josefin+Sans:wght@400;500;600;700&family=Lato:wght@400;700;900&family=Manrope:wght@400;500;600;700;800&family=Merriweather:wght@400;700;900&family=Montserrat:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Raleway:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
@@ -80,6 +80,7 @@ img{max-width:100%;display:block}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
 .field-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.85rem}
 .hint{color:var(--muted);font-size:.77rem;margin-top:.3rem}
+.learn-link{display:inline-flex;align-items:center;gap:.25rem;color:var(--primary);font-size:.76rem;font-weight:800}
 .help-note{display:block;color:var(--muted);font-size:.72rem;line-height:1.45;margin-top:.28rem}
 .custom-select-input{display:none;margin-top:.45rem}
 .custom-select-input.active{display:block}
@@ -134,6 +135,12 @@ img{max-width:100%;display:block}
 .skill-pct-badge{min-width:40px;text-align:right;font-size:.82rem;font-weight:800;color:var(--primary)}
 .skill-bar-preview{height:6px;border-radius:999px;background:var(--border);overflow:hidden;margin-top:.2rem}
 .skill-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .3s}
+.skill-config-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.65rem;margin-bottom:.85rem}
+.skill-mode-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem}
+.skill-mode-card{border:1.5px solid var(--border);background:var(--surface2);border-radius:var(--radius);padding:.65rem;text-align:left;cursor:pointer}
+.skill-mode-card.selected{border-color:var(--primary);background:rgba(12,155,112,.07)}
+.skill-mode-card strong{display:block;font-size:.78rem}
+.skill-mode-card span{display:block;color:var(--muted);font-size:.68rem;margin-top:.15rem}
 /* ====== PAGE MANAGER ====== */
 .page-tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.85rem}
 .page-tab{padding:.38rem .75rem;border-radius:var(--radius);background:var(--surface2);border:1.5px solid var(--border);font-size:.82rem;font-weight:700;color:var(--muted);transition:all .15s}
@@ -176,15 +183,36 @@ img{max-width:100%;display:block}
 .grad-swatch::after{content:'✓';position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:.85rem;opacity:0;text-shadow:0 1px 3px rgba(0,0,0,.5)}
 .grad-swatch.selected::after{opacity:1}
 .grad-swatch-label{font-size:.65rem;color:var(--muted);text-align:center;margin-top:.2rem}
+.gradient-custom-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin-top:.75rem}
+.color-fixer-panel{margin-top:.85rem;padding:.85rem;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface2);display:grid;gap:.6rem}
+.color-fixer-status{font-size:.76rem;color:var(--muted);line-height:1.5}
+.color-fixer-status.good{color:#047857}.color-fixer-status.warn{color:#b45309}.color-fixer-status.bad{color:#b91c1c}
 /* ====== STYLE PICKER ====== */
 .style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.65rem}
 .style-card{border:2px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);padding:.75rem;cursor:pointer;transition:all .15s;text-align:left}
 .style-card:hover{border-color:var(--primary);transform:translateY(-2px)}
 .style-card.selected{border-color:var(--primary);background:rgba(12,155,112,.05);box-shadow:0 0 0 3px rgba(12,155,112,.15)}
 .style-preview{height:52px;border-radius:var(--radius);margin-bottom:.5rem;overflow:hidden;position:relative}
+.style-preview::after{content:"";position:absolute;left:.65rem;right:.65rem;bottom:.65rem;height:5px;border-radius:99px;background:rgba(12,155,112,.45);transform-origin:left}
+.style-card:hover .style-preview::after{animation:stylePulse .7s ease both}
+.style-card[data-style="brutalism"]:hover .style-preview::after,.style-card[data-style="neubrutalism"]:hover .style-preview::after{animation:styleKnock .45s steps(2,end) both}
+.style-card[data-style="glassmorphism"]:hover .style-preview::after,.style-card[data-style="fluent"]:hover .style-preview::after{animation:styleBlur .75s ease both}
+.style-card[data-style="parallax"]:hover .style-preview::after,.style-card[data-style="spatial"]:hover .style-preview::after{animation:styleDepth .8s ease both}
+.style-card[data-style="holographic"]:hover .style-preview::after,.style-card[data-style="aurora"]:hover .style-preview::after{animation:styleHue 1s linear both}
+.style-card[data-style="minimalist"]:hover .style-preview::after,.style-card[data-style="editorial"]:hover .style-preview::after{animation:styleUnderline .7s ease both}
 .style-card strong{font-size:.82rem;display:block}
 .style-card span{color:var(--muted);font-size:.7rem}
 .style-card .learn-link{display:inline-flex;margin-top:.45rem;color:var(--primary);font-size:.7rem;font-weight:800}
+.font-preview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;margin-top:.65rem}
+.font-preview-card{border:1.5px solid var(--border);background:var(--surface2);border-radius:var(--radius);padding:.65rem;text-align:left;cursor:pointer}
+.font-preview-card.selected{border-color:var(--primary);background:rgba(12,155,112,.06)}
+.font-preview-card strong{display:block;font-size:.95rem}.font-preview-card span{display:block;color:var(--muted);font-size:.68rem;margin-top:.15rem}
+@keyframes stylePulse{from{transform:scaleX(.2);opacity:.3}to{transform:scaleX(1);opacity:1}}
+@keyframes styleKnock{0%{transform:translate(0,0)}50%{transform:translate(5px,-3px)}100%{transform:translate(3px,-1px)}}
+@keyframes styleBlur{from{filter:blur(5px);opacity:.25}to{filter:blur(0);opacity:1}}
+@keyframes styleDepth{from{transform:translateY(10px) scale(.8)}to{transform:translateY(-2px) scale(1)}}
+@keyframes styleHue{to{filter:hue-rotate(160deg);transform:scaleX(1)}}
+@keyframes styleUnderline{from{transform:scaleX(.1)}to{transform:scaleX(.75)}}
 /* ====== EFFECTS TABS ====== */
 .effect-tabs{display:flex;gap:.35rem;margin-bottom:.85rem;border-bottom:1px solid var(--border);padding-bottom:.65rem;flex-wrap:wrap}
 .effect-tab{padding:.35rem .75rem;border-radius:var(--radius);border:1.5px solid transparent;font-size:.8rem;font-weight:700;color:var(--muted);transition:all .15s}
@@ -228,6 +256,12 @@ img{max-width:100%;display:block}
 .placement-checks{display:flex;gap:.65rem;flex-wrap:wrap;margin-top:.5rem}
 .placement-check{display:flex;align-items:center;gap:.35rem;font-size:.77rem;color:var(--muted);cursor:pointer}
 .placement-check input{cursor:pointer}
+.social-custom-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;margin-top:.55rem}
+.social-validation{font-size:.72rem;margin-top:.35rem;color:var(--muted)}
+.social-validation.good{color:#047857}.social-validation.bad{color:#b91c1c}
+.icon-suggestions{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.5rem}
+.icon-suggestions button{width:32px;height:32px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--primary);cursor:pointer}
+.icon-suggestions button:hover{border-color:var(--primary)}
 /* ====== EXPORT STEP ====== */
 .export-options{display:grid;grid-template-columns:repeat(2,1fr);gap:.85rem}
 .export-card{border:2px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface)}
@@ -264,7 +298,7 @@ datalist option{font-size:.85rem}
 .contact-map-wrap{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:.75rem;margin-top:.65rem}
 /* ====== RESPONSIVE ====== */
 @media(max-width:760px){
-  .field-row,.field-row-3,.block-layout,.color-grid,.choice-grid,.style-grid,.effect-grid,.export-options{grid-template-columns:1fr}
+  .field-row,.field-row-3,.block-layout,.color-grid,.choice-grid,.style-grid,.effect-grid,.export-options,.gradient-custom-grid,.skill-config-grid,.skill-mode-grid,.social-custom-grid,.font-preview-grid{grid-template-columns:1fr}
   .wizard-col{padding:.85rem .75rem 5.5rem}
   .gradient-grid{grid-template-columns:repeat(4,1fr)}
   .page-tips,.identity-jump{grid-template-columns:1fr}
@@ -437,11 +471,22 @@ datalist option{font-size:.85rem}
     <!-- SKILLS -->
     <div class="card" id="skillsCard">
       <div class="section-head">
-        <div><p class="card-title">Skills</p><p class="hint">Each skill shows as a visual bar in your portfolio.</p></div>
+        <div><p class="card-title">Skills</p><p class="hint">Choose a visual system, then add skills with levels, categories, and colours.</p></div>
         <div class="button-row">
           <button class="btn btn-secondary btn-sm" id="importSkillsBtn"><i class="bx bx-import"></i> Quick Add</button>
           <button class="btn btn-primary btn-sm" id="addSkillBtn"><i class="bx bx-plus"></i> Add Skill</button>
         </div>
+      </div>
+      <div class="skill-config-grid">
+        <div class="field"><label>Search Filter</label><select id="skillSearchable"><option value="false">Hidden</option><option value="true">Show search box</option></select></div>
+        <div class="field"><label>Categories</label><select id="skillCategories"><option value="true">Show category labels</option><option value="false">Hide categories</option></select></div>
+        <div class="field"><label>Badge Shape</label><select id="skillBadgeShape"><option value="pill">Pill</option><option value="square">Square</option><option value="soft">Soft card</option></select></div>
+        <div class="field"><label>Animation</label><select id="skillAnimate"><option value="true">Animate on reveal</option><option value="false">Static</option></select></div>
+      </div>
+      <div class="field">
+        <label>Skill Display</label>
+        <div id="skillModeGrid" class="skill-mode-grid"></div>
+        <input type="hidden" id="skillDisplayMode" value="bars">
       </div>
       <div id="skillsList" class="entry-list"></div>
     </div>
@@ -480,7 +525,11 @@ datalist option{font-size:.85rem}
 
     <div class="card">
       <p class="card-title">Social Profiles</p>
-      <p class="hint" style="margin-bottom:.85rem">For each platform: enter your username or full URL, and choose where it appears.</p>
+      <p class="hint" style="margin-bottom:.85rem">For each platform: enter your username or full URL, validate it, then tune icon shape and colour to match your brand.</p>
+      <div class="button-row" style="margin-bottom:.75rem">
+        <button type="button" class="btn btn-secondary btn-sm" id="addSocialBtn"><i class="bx bx-plus"></i> Add Social</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="fetchIconsBtn"><i class="bx bx-cloud-download"></i> Fetch Icon Options</button>
+      </div>
       <div id="socialsList"></div>
     </div>
 
@@ -550,6 +599,12 @@ datalist option{font-size:.85rem}
       <p class="card-title">Background Gradient</p>
       <div id="gradientGrid" class="gradient-grid"></div>
       <input type="hidden" id="gradientPreset" value="none">
+      <div class="gradient-custom-grid">
+        <div class="color-field"><label>Gradient Start</label><div class="color-swatch-wrap"><div class="color-swatch-preview" id="prevGradientA" style="background:#0C9B70"></div><input type="color" id="gradientColorA" value="#0C9B70"></div></div>
+        <div class="color-field"><label>Gradient Middle</label><div class="color-swatch-wrap"><div class="color-swatch-preview" id="prevGradientB" style="background:#1db88e"></div><input type="color" id="gradientColorB" value="#1db88e"></div></div>
+        <div class="color-field"><label>Gradient End</label><div class="color-swatch-wrap"><div class="color-swatch-preview" id="prevGradientC" style="background:#042444"></div><input type="color" id="gradientColorC" value="#042444"></div></div>
+      </div>
+      <p class="hint">Use three distinct colours to prevent muddy or overlapping gradients.</p>
       <div class="sep"></div>
       <div class="field-row">
         <div class="field"><label>Gradient Type</label>
@@ -570,6 +625,7 @@ datalist option{font-size:.85rem}
 
     <div class="card">
       <p class="card-title">Colours</p>
+      <p class="hint" style="margin-bottom:.85rem">Primary colours drive buttons, links, skill fills, badges, and active navigation. Secondary colours support headers, footer backgrounds, and strong contrast. Surface colours sit behind cards, forms, and content blocks, so they should stay readable for visitors scanning your work quickly.</p>
       <div class="color-grid">
         <div class="color-field">
           <label>Primary</label>
@@ -587,6 +643,17 @@ datalist option{font-size:.85rem}
           <label>Surface</label>
           <div class="color-swatch-wrap"><div class="color-swatch-preview" id="prevSurface" style="background:#ffffff"></div><input type="color" id="surfaceColor" value="#ffffff"></div>
         </div>
+      </div>
+      <div class="color-fixer-panel">
+        <div class="section-head" style="margin-bottom:0">
+          <div><strong>Color Fixer</strong><p class="hint">Checks contrast between buttons, accents, cards, and text.</p></div>
+          <div class="button-row">
+            <button type="button" class="btn btn-secondary btn-sm" id="checkColorsBtn"><i class="bx bx-search-alt"></i> Check</button>
+            <button type="button" class="btn btn-primary btn-sm" id="fixColorsBtn"><i class="bx bx-magic-wand"></i> Fix Visibility</button>
+          </div>
+        </div>
+        <div id="colorFixerStatus" class="color-fixer-status">Run a check before export, especially after choosing custom colours.</div>
+        <a class="learn-link" href="https://portfoliogen-one.vercel.app/work.html" target="_blank" rel="noopener">Learn more about readable colour systems</a>
       </div>
     </div>
 
@@ -607,6 +674,7 @@ datalist option{font-size:.85rem}
             <option value="Merriweather">Merriweather</option><option value="Roboto Mono">Roboto Mono</option>
             <option value="Fira Code">Fira Code</option><option value="Space Mono">Space Mono</option>
           </select>
+          <div id="fontPreviewGrid" class="font-preview-grid"></div>
         </div>
         <div class="field"><label>Border Radius</label>
           <select id="borderRadius">
@@ -699,10 +767,12 @@ datalist option{font-size:.85rem}
 
     <div class="card">
       <p class="card-title">SEO Settings</p>
+      <p class="hint" style="margin-bottom:.85rem">SEO settings control how search engines and social previews describe the exported portfolio.</p>
       <div class="field-row">
         <div class="field"><label>Site URL (for sitemap)</label><input type="text" id="siteURL" placeholder="https://yourname.github.io"></div>
         <div class="field"><label>SEO Keywords</label><input type="text" id="seoKeywords" placeholder="developer, designer, freelance"></div>
       </div>
+      <a class="learn-link" href="https://portfoliogen-one.vercel.app/work.html" target="_blank" rel="noopener">Learn more about portfolio SEO</a>
     </div>
 
     <div class="card">

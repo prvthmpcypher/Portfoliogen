@@ -19,10 +19,12 @@ var schema = {
     primaryColor:'#0C9B70', secondaryColor:'#042444', accentColor:'#1db88e', surfaceColor:'#ffffff',
     fontFamily:'Inter', borderRadius:'.75rem', spacing:'normal',
     aesthetic:'clean', darkMode:true, heroLayout:'split',
+    gradientColorA:'#0C9B70', gradientColorB:'#1db88e', gradientColorC:'#042444',
     gradientPreset:'none', gradientType:'none', gradientDir:'135deg',
     hoverEffect:'lift', scrollEffect:'slideUp', heroEffect:'none',
     cursorEffect:'none', imageEffect:'none', pageTransitions:false,
-    animations:{ enabled:true, style:'slideUp' }
+    animations:{ enabled:true, style:'slideUp' },
+    skillDisplay:{ mode:'bars', animate:true, searchable:false, showCategories:true, badgeShape:'pill' }
   },
   socials: [],
   pages: [],
@@ -59,16 +61,16 @@ var defaultPages = [
 ];
 
 var socialDefs = [
-  {name:'GitHub',   icon:'bxl-github',   platform:'github',   base:'https://github.com/',        inNav:false,inFooter:true, inHero:true, url:''},
-  {name:'LinkedIn', icon:'bxl-linkedin', platform:'linkedin', base:'https://linkedin.com/in/',    inNav:false,inFooter:true, inHero:true, url:''},
-  {name:'X / Twitter',icon:'bxl-twitter',platform:'twitter',base:'https://twitter.com/',          inNav:false,inFooter:false,inHero:false,url:''},
-  {name:'Instagram',icon:'bxl-instagram',platform:'instagram',base:'https://instagram.com/',      inNav:false,inFooter:false,inHero:false,url:''},
-  {name:'YouTube',  icon:'bxl-youtube',  platform:'youtube',  base:'https://youtube.com/@',       inNav:false,inFooter:false,inHero:false,url:''},
-  {name:'Dribbble', icon:'bxl-dribbble', platform:'dribbble', base:'https://dribbble.com/',       inNav:false,inFooter:false,inHero:false,url:''},
-  {name:'Behance',  icon:'bxl-behance',  platform:'behance',  base:'https://behance.net/',        inNav:false,inFooter:false,inHero:false,url:''},
-  {name:'Discord',  icon:'bxl-discord',  platform:'discord',  base:'https://discord.com/users/', inNav:false,inFooter:false,inHero:false,url:''},
-  {name:'TikTok',   icon:'bxl-tiktok',   platform:'tiktok',   base:'https://tiktok.com/@',       inNav:false,inFooter:false,inHero:false,url:''},
-  {name:'Website',  icon:'bx-globe',     platform:'website',  base:'',                            inNav:false,inFooter:true, inHero:false,url:''}
+  {name:'GitHub',   icon:'bxl-github',   platform:'github',   base:'https://github.com/',        inNav:false,inFooter:true, inHero:true, url:'', iconShape:'circle', iconColor:'#0C9B70'},
+  {name:'LinkedIn', icon:'bxl-linkedin', platform:'linkedin', base:'https://linkedin.com/in/',    inNav:false,inFooter:true, inHero:true, url:'', iconShape:'circle', iconColor:'#0a66c2'},
+  {name:'X / Twitter',icon:'bxl-twitter',platform:'twitter',base:'https://twitter.com/',          inNav:false,inFooter:false,inHero:false,url:'', iconShape:'circle', iconColor:'#111827'},
+  {name:'Instagram',icon:'bxl-instagram',platform:'instagram',base:'https://instagram.com/',      inNav:false,inFooter:false,inHero:false,url:'', iconShape:'circle', iconColor:'#e1306c'},
+  {name:'YouTube',  icon:'bxl-youtube',  platform:'youtube',  base:'https://youtube.com/@',       inNav:false,inFooter:false,inHero:false,url:'', iconShape:'circle', iconColor:'#ff0000'},
+  {name:'Dribbble', icon:'bxl-dribbble', platform:'dribbble', base:'https://dribbble.com/',       inNav:false,inFooter:false,inHero:false,url:'', iconShape:'circle', iconColor:'#ea4c89'},
+  {name:'Behance',  icon:'bxl-behance',  platform:'behance',  base:'https://behance.net/',        inNav:false,inFooter:false,inHero:false,url:'', iconShape:'circle', iconColor:'#1769ff'},
+  {name:'Discord',  icon:'bxl-discord',  platform:'discord',  base:'https://discord.com/users/', inNav:false,inFooter:false,inHero:false,url:'', iconShape:'circle', iconColor:'#5865f2'},
+  {name:'TikTok',   icon:'bxl-tiktok',   platform:'tiktok',   base:'https://tiktok.com/@',       inNav:false,inFooter:false,inHero:false,url:'', iconShape:'circle', iconColor:'#111827'},
+  {name:'Website',  icon:'bx-globe',     platform:'website',  base:'',                            inNav:false,inFooter:true, inHero:false,url:'', iconShape:'square', iconColor:'#0C9B70'}
 ];
 
 var skillImportGroups = [
@@ -137,7 +139,13 @@ function getExistingBlockItems(type,key){
   if(!Array.isArray(target.data[key])) target.data[key]=[];
   return target.data[key];
 }
-function syncSkillsToBlocks(){ syncBlockData('skills','skills',getPrimaryBlockItems('skills','skills')); }
+function syncSkillsToBlocks(){
+  syncBlockData('skills','skills',getPrimaryBlockItems('skills','skills'));
+  getBlocksByType('skills').forEach(function(block){
+    if(!block.data) block.data={};
+    block.data.settings=Object.assign({}, schema.theme.skillDisplay);
+  });
+}
 function syncServicesToBlocks(){ syncBlockData('services','services',getPrimaryBlockItems('services','services')); }
 function syncProjectsToBlocks(){ syncBlockData('projects','projects',projects.slice()); }
 
@@ -161,6 +169,10 @@ function initWizard(){
   $id('addProjectBtn').addEventListener('click', addProject);
   $id('addTestiBtn').addEventListener('click', addTestimonial);
   $id('addServiceBtn').addEventListener('click', addService);
+  $id('addSocialBtn').addEventListener('click', addCustomSocial);
+  $id('fetchIconsBtn').addEventListener('click', fetchIconOptions);
+  $id('checkColorsBtn').addEventListener('click', checkColorContrast);
+  $id('fixColorsBtn').addEventListener('click', fixColorContrast);
   $id('importSkillsBtn').addEventListener('click', openImportModal);
   $id('closeImportBtn').addEventListener('click', closeImportModal);
   $id('cancelImportBtn').addEventListener('click', closeImportModal);
@@ -178,8 +190,10 @@ function initWizard(){
   setupInputHelp();
   setupIdentityCompact();
   buildStyleGrid();
+  buildFontPreviewGrid();
   buildGradientGrid();
   buildEffectGrids();
+  buildSkillModeGrid();
   buildSocialsUI();
   buildPagesUI();
   renderAllSkillsEditors();
@@ -467,10 +481,19 @@ function setupColorPickers(){
     if(!input)return;
     input.addEventListener('input',function(){ if(preview) preview.style.background=input.value; schedPreview(); });
   });
+  ['A','B','C'].forEach(function(letter){
+    var input=$id('gradientColor'+letter), preview=$id('prevGradient'+letter);
+    if(!input)return;
+    input.addEventListener('input',function(){ if(preview) preview.style.background=input.value; schedPreview(); checkGradientDistinct(); });
+  });
 }
 function syncColorPreviews(){
   ['primary','secondary','accent','surface'].forEach(function(name){
     var input=$id(name+'Color'), preview=$id('prev'+name.charAt(0).toUpperCase()+name.slice(1));
+    if(input&&preview) preview.style.background=input.value;
+  });
+  ['A','B','C'].forEach(function(letter){
+    var input=$id('gradientColor'+letter), preview=$id('prevGradient'+letter);
     if(input&&preview) preview.style.background=input.value;
   });
 }
@@ -540,6 +563,105 @@ function buildGradientGrid(){
   });
 }
 
+function buildFontPreviewGrid(){
+  var select=$id('fontFamily'), grid=$id('fontPreviewGrid'); if(!select||!grid)return;
+  var fonts=[].slice.call(select.options).filter(function(o){ return o.value && o.value!=='__custom__'; }).map(function(o){ return o.value; });
+  grid.innerHTML=fonts.map(function(font){
+    return'<button type="button" class="font-preview-card'+(select.value===font?' selected':'')+'" data-font="'+esc2(font)+'" style="font-family:\''+esc2(font)+'\',sans-serif">'+
+      '<strong>'+esc2(font)+'</strong><span>Preview: The quick portfolio title</span>'+
+    '</button>';
+  }).join('');
+  grid.querySelectorAll('.font-preview-card').forEach(function(card){
+    card.addEventListener('click',function(){
+      select.value=card.dataset.font;
+      grid.querySelectorAll('.font-preview-card').forEach(function(c){ c.classList.remove('selected'); });
+      card.classList.add('selected');
+      schedPreview();
+    });
+  });
+}
+
+function hexToRgbWizard(hex){
+  var h=String(hex||'').replace('#','');
+  if(h.length===3) h=h.split('').map(function(c){ return c+c; }).join('');
+  var n=parseInt(h,16);
+  if(isNaN(n)) return {r:0,g:0,b:0};
+  return {r:(n>>16)&255,g:(n>>8)&255,b:n&255};
+}
+function luminance(hex){
+  var rgb=hexToRgbWizard(hex);
+  var vals=[rgb.r,rgb.g,rgb.b].map(function(v){
+    v/=255; return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);
+  });
+  return vals[0]*0.2126+vals[1]*0.7152+vals[2]*0.0722;
+}
+function contrastRatio(a,b){
+  var l1=luminance(a), l2=luminance(b), hi=Math.max(l1,l2), lo=Math.min(l1,l2);
+  return (hi+0.05)/(lo+0.05);
+}
+function setColorStatus(msg, cls){
+  var el=$id('colorFixerStatus'); if(!el)return;
+  el.textContent=msg; el.className='color-fixer-status '+(cls||'');
+}
+function checkGradientDistinct(){
+  var a=v('gradientColorA'), b=v('gradientColorB'), c=v('gradientColorC');
+  if(!a||!b||!c)return true;
+  var close=[contrastRatio(a,b),contrastRatio(b,c),contrastRatio(a,c)].some(function(r){ return r<1.25; });
+  if(close) setColorStatus('Gradient colours are too similar. Pick more distinct start, middle, and end colours to avoid flat or muddy backgrounds.','warn');
+  return !close;
+}
+function checkColorContrast(){
+  var primary=v('primaryColor'), secondary=v('secondaryColor'), accent=v('accentColor'), surface=v('surfaceColor');
+  var issues=[];
+  if(contrastRatio(surface,'#1e293b')<4.5) issues.push('Surface is too close to body text.');
+  if(contrastRatio(primary,'#ffffff')<4.5) issues.push('Primary is too light for white button text.');
+  if(contrastRatio(accent,surface)<3) issues.push('Accent may disappear on cards.');
+  if(contrastRatio(secondary,'#ffffff')<4.5) issues.push('Secondary is too light for footer/header text.');
+  if(!checkGradientDistinct()) issues.push('Gradient colours need more separation.');
+  if(issues.length){ setColorStatus(issues.join(' '),'bad'); return false; }
+  setColorStatus('Looks readable: buttons, cards, accents, and footer colours have enough separation for most visitors.','good');
+  return true;
+}
+function fixColorContrast(){
+  if(contrastRatio(v('surfaceColor'),'#1e293b')<4.5) $id('surfaceColor').value='#ffffff';
+  if(contrastRatio(v('primaryColor'),'#ffffff')<4.5) $id('primaryColor').value='#0C7A5A';
+  if(contrastRatio(v('secondaryColor'),'#ffffff')<4.5) $id('secondaryColor').value='#042444';
+  if(contrastRatio(v('accentColor'),v('surfaceColor'))<3) $id('accentColor').value='#1db88e';
+  if(!checkGradientDistinct()){
+    $id('gradientColorA').value=v('primaryColor')||'#0C9B70';
+    $id('gradientColorB').value='#3b82f6';
+    $id('gradientColorC').value=v('secondaryColor')||'#042444';
+  }
+  syncColorPreviews();
+  checkColorContrast();
+  schedPreview();
+}
+
+var skillModes=[
+  {id:'bars',name:'Animated Meters',desc:'Classic progress bars'},
+  {id:'cards',name:'Skill Cards',desc:'Card grid with levels'},
+  {id:'chips',name:'Highlighted Chips',desc:'Compact badges'},
+  {id:'tabs',name:'Tabbed Lists',desc:'Grouped by category'},
+  {id:'accordion',name:'Accordions',desc:'Expandable detail'},
+  {id:'radial',name:'Visual Graphs',desc:'Circular meters'},
+  {id:'table',name:'Compare Table',desc:'Sortable-looking rows'},
+  {id:'badges',name:'Pop-up Badges',desc:'Hover-forward badges'}
+];
+function buildSkillModeGrid(){
+  var grid=$id('skillModeGrid'), hidden=$id('skillDisplayMode'); if(!grid||!hidden)return;
+  grid.innerHTML=skillModes.map(function(mode){
+    return'<button type="button" class="skill-mode-card'+(mode.id===hidden.value?' selected':'')+'" data-mode="'+mode.id+'"><strong>'+mode.name+'</strong><span>'+mode.desc+'</span></button>';
+  }).join('');
+  grid.querySelectorAll('.skill-mode-card').forEach(function(card){
+    card.addEventListener('click',function(){
+      hidden.value=card.dataset.mode;
+      grid.querySelectorAll('.skill-mode-card').forEach(function(c){ c.classList.remove('selected'); });
+      card.classList.add('selected');
+      schedPreview();
+    });
+  });
+}
+
 /* ===== EFFECT GRIDS ===== */
 function buildEffectGrids(){
   // Effect tabs
@@ -583,25 +705,79 @@ function buildEffectGrid(gridId, effects, hiddenId, defaultVal){
 function buildSocialsUI(){
   var list=$id('socialsList'); if(!list)return;
   list.innerHTML=schema.socials.map(function(soc,i){
+    var validation=validateSocialInput(soc);
+    var shape=soc.iconShape||'circle';
+    var color=soc.iconColor||'#0C9B70';
     return'<div class="social-item" data-idx="'+i+'">'+
-      '<div class="social-item-icon"><i class="bx '+soc.icon+'"></i></div>'+
+      '<div class="social-item-icon" style="color:'+esc2(color)+';background:'+esc2(color)+'18;border-radius:'+(shape==='circle'?'50%':shape==='square'?'4px':'12px')+'"><i class="bx '+esc2(soc.icon)+'"></i></div>'+
       '<div class="social-item-info">'+
-        '<div class="social-item-name">'+soc.name+'</div>'+
+        '<div class="field-row">'+
+          '<div class="field"><label>Platform</label><input type="text" value="'+esc2(soc.name)+'" data-social-name="'+i+'" placeholder="Platform name"></div>'+
+          '<div class="field"><label>Icon Class</label><input type="text" value="'+esc2(soc.icon||'bx-link')+'" data-social-icon="'+i+'" placeholder="bxl-github or bx-link"></div>'+
+        '</div>'+
         '<div class="social-url"><input type="text" placeholder="Username or full URL" value="'+esc2(soc.url)+'" data-social="'+i+'" class="social-url-input"></div>'+
+        '<div class="social-validation '+(validation.ok?'good':'bad')+'">'+validation.message+'</div>'+
+        '<div class="social-custom-grid">'+
+          '<div class="field"><label>Shape</label><select data-social-shape="'+i+'"><option value="circle"'+(shape==='circle'?' selected':'')+'>Circle</option><option value="soft"'+(shape==='soft'?' selected':'')+'>Soft square</option><option value="square"'+(shape==='square'?' selected':'')+'>Square</option></select></div>'+
+          '<div class="field"><label>Colour</label><input type="color" value="'+esc2(color)+'" data-social-color="'+i+'"></div>'+
+          '<div class="field"><label>Base URL</label><input type="text" value="'+esc2(soc.base||'')+'" data-social-base="'+i+'" placeholder="https://example.com/"></div>'+
+        '</div>'+
+        '<div class="icon-suggestions" data-icon-suggestions="'+i+'"></div>'+
         '<div class="placement-checks">'+
           '<label class="placement-check"><input type="checkbox" data-idx="'+i+'" data-place="inNav"'+(soc.inNav?' checked':'')+'>Navbar</label>'+
           '<label class="placement-check"><input type="checkbox" data-idx="'+i+'" data-place="inFooter"'+(soc.inFooter?' checked':'')+'>Footer</label>'+
           '<label class="placement-check"><input type="checkbox" data-idx="'+i+'" data-place="inHero"'+(soc.inHero?' checked':'')+'>Hero</label>'+
         '</div>'+
+        '<div class="button-row" style="margin-top:.5rem"><button type="button" class="btn btn-ghost btn-sm social-remove" data-social-remove="'+i+'"><i class="bx bx-trash"></i> Remove</button></div>'+
       '</div>'+
     '</div>';
   }).join('');
+  attachIconSuggestions();
+  list.querySelectorAll('[data-social-name]').forEach(function(inp){
+    inp.addEventListener('input',function(){ var idx=parseInt(inp.dataset.socialName,10); if(schema.socials[idx]) schema.socials[idx].name=inp.value.trim()||'Custom'; schedPreview(); });
+  });
+  list.querySelectorAll('[data-social-icon]').forEach(function(inp){
+    inp.addEventListener('input',function(){
+      var idx=parseInt(inp.dataset.socialIcon,10);
+      if(schema.socials[idx]) schema.socials[idx].icon=normalizeIconClass(inp.value);
+      var icon=inp.closest('.social-item').querySelector('.social-item-icon i');
+      if(icon) icon.className='bx '+normalizeIconClass(inp.value);
+      schedPreview();
+    });
+  });
   list.querySelectorAll('.social-url-input').forEach(function(inp){
     inp.addEventListener('input',function(){
       var idx=parseInt(inp.dataset.social,10);
       if(schema.socials[idx]) schema.socials[idx].url=inp.value.trim();
+      var status=inp.closest('.social-item').querySelector('.social-validation');
+      var validation=validateSocialInput(schema.socials[idx]);
+      if(status){ status.textContent=validation.message; status.className='social-validation '+(validation.ok?'good':'bad'); }
       schedPreview();
     });
+  });
+  list.querySelectorAll('[data-social-shape]').forEach(function(sel){
+    sel.addEventListener('change',function(){
+      var idx=parseInt(sel.dataset.socialShape,10);
+      if(schema.socials[idx]) schema.socials[idx].iconShape=sel.value;
+      var icon=sel.closest('.social-item').querySelector('.social-item-icon');
+      if(icon) icon.style.borderRadius=sel.value==='circle'?'50%':sel.value==='square'?'4px':'12px';
+      schedPreview();
+    });
+  });
+  list.querySelectorAll('[data-social-color]').forEach(function(inp){
+    inp.addEventListener('input',function(){
+      var idx=parseInt(inp.dataset.socialColor,10);
+      if(schema.socials[idx]) schema.socials[idx].iconColor=inp.value;
+      var icon=inp.closest('.social-item').querySelector('.social-item-icon');
+      if(icon){ icon.style.color=inp.value; icon.style.background=inp.value+'18'; }
+      schedPreview();
+    });
+  });
+  list.querySelectorAll('[data-social-base]').forEach(function(inp){
+    inp.addEventListener('input',function(){ var idx=parseInt(inp.dataset.socialBase,10); if(schema.socials[idx]) schema.socials[idx].base=inp.value.trim(); schedPreview(); });
+  });
+  list.querySelectorAll('[data-social-remove]').forEach(function(btn){
+    btn.addEventListener('click',function(){ schema.socials.splice(parseInt(btn.dataset.socialRemove,10),1); buildSocialsUI(); schedPreview(); });
   });
   list.querySelectorAll('[data-place]').forEach(function(cb){
     cb.addEventListener('change',function(){
@@ -609,6 +785,56 @@ function buildSocialsUI(){
       if(schema.socials[idx]) schema.socials[idx][cb.dataset.place]=cb.checked;
       schedPreview();
     });
+  });
+  setupInputHelp();
+}
+
+function normalizeIconClass(icon){
+  icon=String(icon||'bx-link').trim().replace(/^bx\s+/,'');
+  return icon||'bx-link';
+}
+function validateSocialInput(soc){
+  if(!soc.url) return {ok:true,message:'Optional. Add a username or full URL when you want this profile shown.'};
+  if(/^https?:\/\//i.test(soc.url)){
+    try{ new URL(soc.url); return {ok:true,message:'Valid full URL.'}; }catch(e){ return {ok:false,message:'URL format looks invalid.'}; }
+  }
+  if(!soc.base) return {ok:false,message:'Add a full URL or provide a base URL for this custom platform.'};
+  if(/\s/.test(soc.url)) return {ok:false,message:'Usernames cannot include spaces. Use a full URL if needed.'};
+  return {ok:true,message:'Username will be combined with the platform base URL.'};
+}
+function addCustomSocial(){
+  schema.socials.push({name:'Custom',icon:'bx-link',platform:'custom-'+Date.now(),base:'',inNav:false,inFooter:true,inHero:false,url:'',iconShape:'soft',iconColor:'#0C9B70'});
+  buildSocialsUI();
+  schedPreview();
+}
+var fetchedIconOptions=['bxl-github','bxl-linkedin','bxl-twitter','bxl-instagram','bxl-youtube','bxl-dribbble','bxl-behance','bxl-discord','bxl-tiktok','bx-globe','bx-link','bx-envelope','bx-code-alt','bx-palette'];
+function attachIconSuggestions(){
+  document.querySelectorAll('[data-icon-suggestions]').forEach(function(wrap){
+    var idx=parseInt(wrap.dataset.iconSuggestions,10);
+    wrap.innerHTML=fetchedIconOptions.slice(0,18).map(function(icon){
+      return'<button type="button" title="'+esc2(icon)+'" data-pick-icon="'+esc2(icon)+'" data-idx="'+idx+'"><i class="bx '+esc2(icon)+'"></i></button>';
+    }).join('');
+  });
+  document.querySelectorAll('[data-pick-icon]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var idx=parseInt(btn.dataset.idx,10);
+      if(schema.socials[idx]) schema.socials[idx].icon=btn.dataset.pickIcon;
+      buildSocialsUI();
+      schedPreview();
+    });
+  });
+}
+function fetchIconOptions(){
+  toast('Fetching Boxicons list...');
+  fetch('https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css').then(function(res){ return res.text(); }).then(function(css){
+    var found={}, re=/\.((?:bxl|bx|bxs)-[a-z0-9-]+):before/g, m;
+    while((m=re.exec(css))){ found[m[1]]=true; }
+    fetchedIconOptions=Object.keys(found).slice(0,120);
+    buildSocialsUI();
+    toast('Icon options loaded.');
+  }).catch(function(){
+    toast('Using built-in icon suggestions.');
+    attachIconSuggestions();
   });
 }
 
@@ -1156,6 +1382,9 @@ function collectSchema(){
   schema.theme.secondaryColor=$id('secondaryColor').value;
   schema.theme.accentColor=$id('accentColor').value;
   schema.theme.surfaceColor=$id('surfaceColor').value;
+  schema.theme.gradientColorA=$id('gradientColorA').value;
+  schema.theme.gradientColorB=$id('gradientColorB').value;
+  schema.theme.gradientColorC=$id('gradientColorC').value;
   schema.theme.fontFamily=customSelectValue('fontFamily');
   schema.theme.borderRadius=customSelectValue('borderRadius');
   schema.theme.spacing=customSelectValue('spacingSelect');
@@ -1173,6 +1402,13 @@ function collectSchema(){
   schema.theme.imageEffect=v('imageEffect');
   schema.theme.pageTransitions=$id('pageTransitions').checked;
   schema.theme.animations={enabled:true,style:v('scrollEffect')};
+  schema.theme.skillDisplay={
+    mode:v('skillDisplayMode')||'bars',
+    animate:v('skillAnimate')!=='false',
+    searchable:v('skillSearchable')==='true',
+    showCategories:v('skillCategories')!=='false',
+    badgeShape:v('skillBadgeShape')||'pill'
+  };
   // Step 4
   schema.integrations.githubCommits=$id('intGithub').checked;
   schema.integrations.githubUsername=v('ghUsername');
