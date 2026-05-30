@@ -25,10 +25,10 @@ const scrollActive = () =>{
     const scrollDown = window.scrollY
 
   sections.forEach(current =>{
+        const safeId = window.CSS && CSS.escape ? CSS.escape(current.getAttribute('id')) : current.getAttribute('id')
         const sectionHeight = current.offsetHeight,
               sectionTop = current.offsetTop - 58,
-              sectionId = current.getAttribute('id'),
-              sectionsClass = document.querySelector('.nav__menu a[href*=' + sectionId + ']')
+              sectionsClass = document.querySelector('.nav__menu a[href*="#' + safeId + '"]')
         
         if(!sectionsClass) return
 
@@ -143,14 +143,16 @@ contactForms.forEach((contactForm) => {
         e.preventDefault();
         
         // Grab values
-        const userName = contactForm.querySelector('input[type="text"]').value.trim();
-        const userEmail = contactForm.querySelector('input[type="email"]').value.trim();
+        const nameInput = contactForm.querySelector('input[name="name"], input[type="text"]');
+        const emailInput = contactForm.querySelector('input[type="email"]');
+        const userName = nameInput ? nameInput.value.trim() : 'Subscriber';
+        const userEmail = emailInput ? emailInput.value.trim() : '';
         
         // Clear old toast nodes
         toastContainer.innerHTML = '';
 
         // Validation Rules
-        if(userName.length < 2) {
+        if(nameInput && userName.length < 2) {
             showToast('Please enter a valid name', 'error');
             return;
         }

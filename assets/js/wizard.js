@@ -16,7 +16,7 @@ var schema = {
   certs: [],
   theme: {
     primaryColor:'#0C9B70', secondaryColor:'#042444', accentColor:'#1db88e', surfaceColor:'#ffffff',
-    fontFamily:'Plus Jakarta Sans', borderRadius:'.75rem', spacing:'normal',
+    fontFamily:'Inter', borderRadius:'.75rem', spacing:'normal',
     aesthetic:'clean', darkMode:true, heroLayout:'split',
     gradientPreset:'none', gradientType:'none', gradientDir:'135deg',
     hoverEffect:'lift', scrollEffect:'slideUp', heroEffect:'none',
@@ -53,9 +53,6 @@ var defaultPages = [
   { name:'skills', label:'Skills', navLabel:'Skills', enabled:false, blocks:[
     {id:'skills-s',type:'skills',cols:8,order:0,data:{skills:[]}},
     {id:'certs-s',type:'certs',cols:4,order:1,data:{}}
-  ]},
-  { name:'contact', label:'Contact', navLabel:'Contact', enabled:true, blocks:[
-    {id:'contact-c',type:'contact',cols:12,order:0,data:{}}
   ]}
 ];
 
@@ -87,6 +84,52 @@ function v(id){ var el=$id(id); return el?el.value.trim():''; }
 function setVal(id,val){ var el=$id(id); if(el) el.value=val||''; }
 function esc2(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+function getBlocksByType(type){
+  var blocks=[];
+  schema.pages.forEach(function(page){
+    (page.blocks||[]).forEach(function(block){ if(block.type===type) blocks.push(block); });
+  });
+  return blocks;
+}
+function ensureBlockOnHome(type){
+  var blocks=getBlocksByType(type);
+  if(blocks.length) return blocks[0];
+  var page=schema.pages[0];
+  var reg=BLOCK_REGISTRY[type]||{defaultCols:12};
+  var block={id:type+'-'+Date.now(),type:type,cols:reg.defaultCols||12,order:(page.blocks||[]).length,data:{},disabled:false};
+  page.blocks.push(block);
+  reorderPageBlocks(0);
+  buildPagesUI();
+  return block;
+}
+function syncBlockData(type,key,items){
+  getBlocksByType(type).forEach(function(block){
+    if(!block.data) block.data={};
+    block.data[key]=items;
+  });
+}
+function getPrimaryBlockItems(type,key){
+  var blocks=getBlocksByType(type);
+  var filled=blocks.find(function(block){ return block.data&&Array.isArray(block.data[key])&&block.data[key].length; });
+  var target=filled||blocks[0]||ensureBlockOnHome(type);
+  if(!target.data) target.data={};
+  if(!Array.isArray(target.data[key])) target.data[key]=[];
+  syncBlockData(type,key,target.data[key]);
+  return target.data[key];
+}
+function getExistingBlockItems(type,key){
+  var blocks=getBlocksByType(type);
+  var filled=blocks.find(function(block){ return block.data&&Array.isArray(block.data[key])&&block.data[key].length; });
+  var target=filled||blocks.find(function(block){ return block.data&&Array.isArray(block.data[key]); })||blocks[0];
+  if(!target) return [];
+  if(!target.data) target.data={};
+  if(!Array.isArray(target.data[key])) target.data[key]=[];
+  return target.data[key];
+}
+function syncSkillsToBlocks(){ syncBlockData('skills','skills',getPrimaryBlockItems('skills','skills')); }
+function syncServicesToBlocks(){ syncBlockData('services','services',getPrimaryBlockItems('services','services')); }
+function syncProjectsToBlocks(){ syncBlockData('projects','projects',projects.slice()); }
+
 function toast(msg, dur){
   var t=$id('toast'); if(!t)return;
   t.textContent=msg; t.classList.add('visible');
@@ -112,15 +155,11 @@ function initWizard(){
   $id('cancelImportBtn').addEventListener('click', closeImportModal);
   $id('doImportBtn').addEventListener('click', doImportSkills);
   $id('openTabBtn').addEventListener('click', openInNewTab);
-  $id('fullscreenBtn').addEventListener('click', openFullscreen);
-  $id('closeFullscreenBtn').addEventListener('click', closeFullscreen);
-  $id('canvasEditBtn').addEventListener('click', toggleCanvasEdit);
   $id('pdfExportBtn').addEventListener('click', exportPDF);
-  $id('intGithub').addEventListener('change', function(){ $id('ghUsernameField').style.display=this.checked?'block':'none'; schedPreview(); });
+  $id('intGithub').addEventListener('change', function(){ if(this.checked) ensureBlockOnHome('githubFeed'); $id('ghUsernameField').style.display=this.checked?'block':'none'; schedPreview(); });
   $id('showMap').addEventListener('change', function(){ $id('mapWrap').style.display=this.checked?'block':'none'; schedPreview(); });
   $id('showAvailability').addEventListener('change', function(){ $id('availabilityField').style.display=this.checked?'block':'none'; schedPreview(); });
-  $id('previewToggleBtn').addEventListener('click', toggleSidePreview);
-  $id('mobilePreviewBtn').addEventListener('click', openFullscreen);
+  $id('previewToggleBtn').addEventListener('click', openInNewTab);
   setupUploadZone('photoDrop','photoInput','photoError',handlePhoto);
   setupUploadZone('faviconDrop','faviconInput','faviconError',handleFavicon);
   setupColorPickers();
@@ -129,8 +168,10 @@ function initWizard(){
   buildEffectGrids();
   buildSocialsUI();
   buildPagesUI();
-  initDraggablePreview();
-  initDeviceButtons();
+  renderAllSkillsEditors();
+  renderProjectsList();
+  renderTestiList();
+  renderServicesList();
   document.addEventListener('input', onAnyInput, true);
   document.addEventListener('change', onAnyInput, true);
   showStep(1);
@@ -152,9 +193,8 @@ function showStep(n){
   $id('navInfo').textContent='Step '+n+' of '+TOTAL_STEPS;
   // Side preview visible for steps 1–6
   var shell=$id('genShell');
-  if(shell) shell.classList.toggle('preview-open', n < TOTAL_STEPS);
+  if(shell) shell.classList.remove('preview-open');
   if(n===TOTAL_STEPS) collectSchema();
-  schedPreview();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -177,13 +217,10 @@ function onAnyInput(e){
 }
 function schedPreview(){
   clearTimeout(previewTimer);
-  previewTimer=setTimeout(rebuildPreview, 350);
+  previewTimer=setTimeout(function(){ collectSchema(); }, 350);
 }
 function rebuildPreview(){
   collectSchema();
-  var html=compilePage(schema.pages[0]||{name:'index',blocks:[]}, schema, true);
-  writeFrame($id('liveSideFrame'), html);
-  writeFrame($id('floatPreviewFrame'), html);
 }
 function writeFrame(frame, html){
   if(!frame) return;
@@ -195,89 +232,12 @@ function writeFrame(frame, html){
 
 /* ===== TOGGLE SIDE PREVIEW ===== */
 function toggleSidePreview(){
-  var shell=$id('genShell');
-  var panel=$id('previewPanel');
-  if(window.innerWidth>=1160){
-    shell.classList.toggle('preview-open');
-    schedPreview();
-  } else {
-    panel.classList.toggle('visible');
-    if(panel.classList.contains('visible')) schedPreview();
-  }
+  openInNewTab();
 }
 
-/* ===== DRAGGABLE FLOATING PREVIEW ===== */
-function initDraggablePreview(){
-  var panel=$id('previewPanel');
-  var bar=$id('previewPanelBar');
-  if(!panel||!bar)return;
-  var drag={active:false,ox:0,oy:0,px:0,py:0};
-  bar.addEventListener('mousedown',function(e){
-    if(e.target.closest('button')||e.target.closest('.preview-device-btns'))return;
-    drag.active=true;
-    var r=panel.getBoundingClientRect();
-    drag.ox=e.clientX-r.left; drag.oy=e.clientY-r.top;
-    panel.style.transition='none';
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove',function(e){
-    if(!drag.active)return;
-    var x=e.clientX-drag.ox, y=e.clientY-drag.oy;
-    x=Math.max(0,Math.min(window.innerWidth-panel.offsetWidth, x));
-    y=Math.max(0,Math.min(window.innerHeight-panel.offsetHeight, y));
-    panel.style.right='auto'; panel.style.bottom='auto';
-    panel.style.left=x+'px'; panel.style.top=y+'px';
-  });
-  document.addEventListener('mouseup',function(){ drag.active=false; panel.style.transition=''; });
-  // Touch drag
-  bar.addEventListener('touchstart',function(e){
-    if(e.target.closest('button'))return;
-    var t=e.touches[0]; var r=panel.getBoundingClientRect();
-    drag.active=true; drag.ox=t.clientX-r.left; drag.oy=t.clientY-r.top;
-    e.preventDefault();
-  },{passive:false});
-  document.addEventListener('touchmove',function(e){
-    if(!drag.active)return;
-    var t=e.touches[0];
-    var x=t.clientX-drag.ox, y=t.clientY-drag.oy;
-    x=Math.max(0,Math.min(window.innerWidth-panel.offsetWidth,x));
-    y=Math.max(0,Math.min(window.innerHeight-panel.offsetHeight,y));
-    panel.style.right='auto'; panel.style.bottom='auto';
-    panel.style.left=x+'px'; panel.style.top=y+'px';
-  },{passive:false});
-  document.addEventListener('touchend',function(){ drag.active=false; });
-  $id('panelCloseBtn').addEventListener('click',function(){ panel.classList.remove('visible'); });
-  $id('panelMinBtn').addEventListener('click',function(){
-    var fw=$id('previewFrameWrap');
-    fw.style.display=fw.style.display==='none'?'':'none';
-  });
-}
-
-/* ===== DEVICE BUTTONS ===== */
-function initDeviceButtons(){
-  document.querySelectorAll('.preview-device-btns').forEach(function(group){
-    group.querySelectorAll('.dev-btn').forEach(function(btn){
-      btn.addEventListener('click',function(){
-        group.querySelectorAll('.dev-btn').forEach(function(b){ b.classList.remove('active'); });
-        btn.classList.add('active');
-        var w=btn.dataset.width;
-        // Apply to all frames
-        [$id('liveSideFrame'),$id('floatPreviewFrame'),$id('fullscreenFrame')].forEach(function(f){
-          if(f) f.style.width=w==='full'?'100%':w+'px';
-        });
-      });
-    });
-  });
-}
-
-/* ===== FULLSCREEN MODAL ===== */
-function openFullscreen(){
-  collectSchema();
-  var html=compilePage(schema.pages[0]||{name:'index',blocks:[]}, schema, true);
-  writeFrame($id('fullscreenFrame'), html);
-  $id('fullscreenModal').classList.add('visible');
-}
-function closeFullscreen(){ $id('fullscreenModal').classList.remove('visible'); }
+/* ===== PREVIEW ===== */
+function openFullscreen(){ openInNewTab(); }
+function closeFullscreen(){}
 function openInNewTab(){
   collectSchema();
   var html=compilePage(schema.pages[0]||{name:'index',blocks:[]}, schema, true);
@@ -287,26 +247,33 @@ function openInNewTab(){
 }
 
 /* ===== CANVAS EDIT ===== */
-function toggleCanvasEdit(){
-  editMode=!editMode;
-  var btn=$id('canvasEditBtn');
-  btn.style.borderColor=editMode?'var(--primary)':'';
-  if(editMode){
-    openFullscreen();
-    setTimeout(function(){
-      var frame=$id('fullscreenFrame');
-      var doc=frame&&frame.contentDocument;
-      if(!doc)return;
-      var s=doc.createElement('style');
-      s.textContent='[data-field]{outline:2px dashed rgba(12,155,112,.6);outline-offset:2px;cursor:text}[data-field]:hover{background:rgba(12,155,112,.06)}';
-      doc.head.appendChild(s);
-      doc.querySelectorAll('[data-field]').forEach(function(el){
-        el.setAttribute('contenteditable','true');
-        el.addEventListener('blur',function(){
-          toast('Canvas edit saved locally');
-        });
-      });
-    },300);
+function toggleCanvasEdit(){ openInNewTab(); }
+
+function applyCanvasEdit(field, value){
+  if(!field) return;
+  var parts=field.split('.');
+  if(parts[0]==='meta'&&parts[1]){
+    schema.meta[parts[1]]=value;
+    var formIds={name:'fullName',title:'profTitle',tagline:'tagline',bio:'bio',email:'email'};
+    if(formIds[parts[1]]) setVal(formIds[parts[1]], value);
+    return;
+  }
+  if(parts[0]==='project'&&parts.length>=3){
+    var pi=parseInt(parts[2],10);
+    if(projects[pi]){
+      projects[pi][parts[1]]=value;
+      renderProjectsList();
+      syncProjectsToBlocks();
+    }
+    return;
+  }
+  if(parts[0]==='edu'&&parts.length>=3){
+    var ei=parseInt(parts[2],10);
+    var eduMap={institution:'institution',degree:'degree'};
+    if(schema.education[ei]&&eduMap[parts[1]]){
+      schema.education[ei][eduMap[parts[1]]]=value;
+      renderEntry('education');
+    }
   }
 }
 
@@ -674,7 +641,11 @@ function addBlockToPage(pi, type){
   var reg=BLOCK_REGISTRY[type];
   var id=type+'-'+Date.now();
   var blocks=schema.pages[pi].blocks;
-  blocks.push({id:id,type:type,cols:reg?reg.defaultCols:12,order:blocks.length,data:{},disabled:false});
+  var data={};
+  if(type==='skills') data.skills=getPrimaryBlockItems('skills','skills');
+  if(type==='projects') data.projects=projects.slice();
+  if(type==='services') data.services=getExistingBlockItems('services','services').slice();
+  blocks.push({id:id,type:type,cols:reg?reg.defaultCols:12,order:blocks.length,data:data,disabled:false});
   reorderPageBlocks(pi); renderCanvas(pi); schedPreview();
 }
 function getBlock(pi, bid){ var p=schema.pages[pi]; return p&&p.blocks.find(function(b){ return b.id===bid; }); }
@@ -693,14 +664,15 @@ function updateBentoPreview(pi){
 
 /* ===== SKILLS ===== */
 function addSkill(){
-  schema.pages.forEach(function(page){ page.blocks.forEach(function(block){ if(block.type==='skills'){ if(!block.data.skills) block.data.skills=[]; block.data.skills.push({name:'',level:75,color:'#0C9B70',category:''}); }}); });
+  var skills=getPrimaryBlockItems('skills','skills');
+  skills.push({name:'',level:75,color:'#0C9B70',category:''});
+  syncSkillsToBlocks();
   renderAllSkillsEditors(); schedPreview();
 }
 
 function renderAllSkillsEditors(){
   var list=$id('skillsList'); if(!list)return;
-  var allSkills=[];
-  schema.pages.forEach(function(page){ page.blocks.forEach(function(block){ if(block.type==='skills'&&block.data&&block.data.skills) allSkills=block.data.skills; }); });
+  var allSkills=getPrimaryBlockItems('skills','skills');
   if(!allSkills.length){ list.innerHTML='<p class="hint">No skills yet. Click Add Skill.</p>'; return; }
   list.innerHTML=allSkills.map(function(sk,i){
     return'<div class="skill-card" data-si="'+i+'">'+
@@ -753,7 +725,7 @@ function bindSkillsEvents(list, skills){
   list.querySelectorAll('.skill-del').forEach(function(btn){
     btn.addEventListener('click',function(){
       var i=parseInt(btn.dataset.si,10); skills.splice(i,1);
-      renderAllSkillsEditors(); schedPreview();
+      syncSkillsToBlocks(); renderAllSkillsEditors(); schedPreview();
     });
   });
 }
@@ -771,8 +743,7 @@ function openImportModal(){
 }
 function closeImportModal(){ $id('importModal').style.display='none'; }
 function doImportSkills(){
-  var allSkills=[];
-  schema.pages.forEach(function(page){ page.blocks.forEach(function(block){ if(block.type==='skills'&&block.data){ if(!block.data.skills) block.data.skills=[]; allSkills=block.data.skills; }}); });
+  var allSkills=getPrimaryBlockItems('skills','skills');
   var colors=['#0C9B70','#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981'];
   $id('skillGroups').querySelectorAll('input:checked').forEach(function(cb){
     var gi=parseInt(cb.dataset.gi,10);
@@ -781,7 +752,7 @@ function doImportSkills(){
       if(!existing) allSkills.push({name:parts[0].trim(),level:parseInt(parts[1]||75),color:colors[i%colors.length],category:skillImportGroups[gi].name});
     });
   });
-  closeImportModal(); renderAllSkillsEditors(); schedPreview(); toast('Skills imported!');
+  syncSkillsToBlocks(); closeImportModal(); renderAllSkillsEditors(); schedPreview(); toast('Skills imported!');
 }
 
 /* ===== PROJECTS ===== */
@@ -843,6 +814,7 @@ function renderProjectsList(){
 
 /* ===== TESTIMONIALS ===== */
 function addTestimonial(){
+  ensureBlockOnHome('testimonials');
   schema.testimonials.push({name:'',role:'',quote:'',avatar:''});
   renderTestiList(); schedPreview();
 }
@@ -865,21 +837,19 @@ function renderTestiList(){
 
 /* ===== SERVICES ===== */
 function addService(){
-  var list=$id('servicesList');
-  schema.pages.forEach(function(page){ page.blocks.forEach(function(block){
-    if(block.type==='services'){ if(!block.data.services) block.data.services=[]; block.data.services.push({title:'',desc:'',emoji:'⚡',price:''}); }
-  });});
+  var services=getPrimaryBlockItems('services','services');
+  services.push({title:'',desc:'',emoji:'⚡',price:''});
+  syncServicesToBlocks();
   renderServicesList(); schedPreview();
 }
 function renderServicesList(){
   var list=$id('servicesList'); if(!list)return;
-  var services=[];
-  schema.pages.forEach(function(page){ page.blocks.forEach(function(block){ if(block.type==='services'&&block.data&&block.data.services) services=block.data.services; }); });
+  var services=getExistingBlockItems('services','services');
   if(!services.length){ list.innerHTML='<p class="hint">No services yet.</p>'; return; }
   list.innerHTML=services.map(function(sv,i){
     return'<div class="entry-card">'+
       '<div class="entry-card-head"><span class="entry-card-title">Service '+(i+1)+'</span>'+
-      '<button type="button" class="btn btn-danger btn-icon btn-sm" onclick="var s=[]; schema.pages.forEach(function(p){p.blocks.forEach(function(b){if(b.type===\'services\'&&b.data&&b.data.services)s=b.data.services;});}); s.splice('+i+',1); renderServicesList(); schedPreview()"><i class="bx bx-x"></i></button></div>'+
+      '<button type="button" class="btn btn-danger btn-icon btn-sm svc-del" data-svi="'+i+'"><i class="bx bx-x"></i></button></div>'+
       '<div class="field-row"><div class="field"><label>Emoji Icon</label><input type="text" value="'+esc2(sv.emoji||'⚡')+'" style="width:60px" data-field="emoji" data-svi="'+i+'" class="svc-input"></div>'+
       '<div class="field"><label>Title</label><input type="text" value="'+esc2(sv.title)+'" data-field="title" data-svi="'+i+'" class="svc-input"></div>'+
       '<div class="field"><label>Price</label><input type="text" value="'+esc2(sv.price||'')+'" data-field="price" data-svi="'+i+'" class="svc-input" placeholder="From $500"></div></div>'+
@@ -889,8 +859,15 @@ function renderServicesList(){
   list.querySelectorAll('.svc-input').forEach(function(inp){
     inp.addEventListener('input',function(){
       var si=parseInt(inp.dataset.svi,10);
-      schema.pages.forEach(function(page){ page.blocks.forEach(function(block){ if(block.type==='services'&&block.data&&block.data.services&&block.data.services[si]) block.data.services[si][inp.dataset.field]=inp.value; }); });
+      services[si][inp.dataset.field]=inp.value;
+      syncServicesToBlocks();
       schedPreview();
+    });
+  });
+  list.querySelectorAll('.svc-del').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      services.splice(parseInt(btn.dataset.svi,10),1);
+      syncServicesToBlocks(); renderServicesList(); schedPreview();
     });
   });
 }
@@ -1005,12 +982,9 @@ function collectSchema(){
   schema.availabilityBadge=schema.contact.showAvailability?statusLabels[schema.contact.status]||'':'';
   // Step 7
   schema.siteURL=v('siteURL'); schema.seoKeywords=v('seoKeywords');
-  // Sync projects to blocks
-  schema.pages.forEach(function(page){
-    page.blocks.forEach(function(block){
-      if(block.type==='projects') block.data.projects=projects.slice();
-    });
-  });
+  syncSkillsToBlocks();
+  syncProjectsToBlocks();
+  if(getBlocksByType('services').length) syncServicesToBlocks();
   return schema;
 }
 
