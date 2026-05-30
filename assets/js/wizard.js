@@ -65,6 +65,31 @@ function v(id) {
     return el ? el.value.trim() : '';
 }
 
+function cleanText(value, maxLength) {
+    return String(value || '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, maxLength);
+}
+
+function isValidEmail(value) {
+    if (!value) return true;
+    return /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(value) && value.length <= 254;
+}
+
+function safeInputUrl(value) {
+    var raw = cleanText(value, 2048);
+    if (!raw) return '';
+    if (!/^https?:\/\//i.test(raw)) return '';
+    try {
+        var parsed = new URL(raw);
+        return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.href : '';
+    } catch (error) {
+        return '';
+    }
+}
+
+function safeUsername(value) {
+    return cleanText(value, 80).replace(/^@/, '').replace(/[^a-zA-Z0-9._-]/g, '');
+}
+
 /* Sets an input value if the element exists. */
 function setValue(id, value) {
     var el = byId(id);
@@ -144,8 +169,24 @@ function validate() {
         alert('Please fill in Full Name, Professional Title, Tagline, and Bio.');
         return false;
     }
+    if (currentStep === 1 && !isValidEmail(v('email'))) {
+        alert('Please provide a valid email address.');
+        return false;
+    }
+    if (currentStep === 1 && v('resumeUrl') && !safeInputUrl(v('resumeUrl'))) {
+        alert('Resume URL must start with http:// or https://.');
+        return false;
+    }
     if (currentStep === 2 && selectedBlocks.length === 0) {
         alert('Add at least one block.');
+        return false;
+    }
+    if (currentStep === 3 && v('website') && !safeInputUrl(v('website'))) {
+        alert('Website URL must start with http:// or https://.');
+        return false;
+    }
+    if (currentStep === TOTAL && v('siteURL') && !safeInputUrl(v('siteURL'))) {
+        alert('Site URL must start with http:// or https://.');
         return false;
     }
     return true;
@@ -205,8 +246,8 @@ function handleProfilePhoto(file, errorId) {
 
 /* Handles favicon upload and preview. */
 function handleFavicon(file, errorId) {
-    var allowed = ['image/png', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon'];
-    if (!validateImage(file, allowed, 512 * 1024, errorId, ['ico', 'png', 'svg'])) return;
+    var allowed = ['image/png', 'image/x-icon', 'image/vnd.microsoft.icon'];
+    if (!validateImage(file, allowed, 512 * 1024, errorId, ['ico', 'png'])) return;
     readFileAsDataURL(file).then(function(dataUrl) {
         schema.meta.faviconBase64 = dataUrl;
         byId('faviconPreview').innerHTML = '<img src="' + dataUrl + '" alt="Favicon preview"><button type="button" class="btn btn-secondary" id="removeFaviconBtn">Remove</button>';
@@ -603,18 +644,27 @@ function collectSchema() {
     var skillBlock = selectedBlocks.find(function(block) { return block.type === 'skills'; });
     if (skillBlock) skillBlock.data.skills = parseSkills(v('skillsInput'));
     var projectBlock = selectedBlocks.find(function(block) { return block.type === 'projects'; });
-    if (projectBlock) projectBlock.data.projects = projects.slice();
-    schema.meta.name = v('fullName');
-    schema.meta.title = v('profTitle');
-    schema.meta.email = v('email');
-    schema.meta.tagline = v('tagline');
-    schema.meta.bio = v('bio');
-    schema.meta.resumeUrl = v('resumeUrl');
+    if (projectBlock) projectBlock.data.projects = projects.map(function(project) {
+        return {
+            title: cleanText(project.title, 120),
+            category: cleanText(project.category, 80),
+            desc: cleanText(project.desc, 600),
+            link: safeInputUrl(project.link),
+            source: safeInputUrl(project.source),
+            imageBase64: project.imageBase64 || ''
+        };
+    });
+    schema.meta.name = cleanText(v('fullName'), 120);
+    schema.meta.title = cleanText(v('profTitle'), 140);
+    schema.meta.email = isValidEmail(v('email')) ? cleanText(v('email'), 254) : '';
+    schema.meta.tagline = cleanText(v('tagline'), 180);
+    schema.meta.bio = cleanText(v('bio'), 1200);
+    schema.meta.resumeUrl = safeInputUrl(v('resumeUrl'));
     schema.socials.github = socialURL('github', v('github'));
     schema.socials.linkedin = socialURL('linkedin', v('linkedin'));
     schema.socials.twitter = socialURL('twitter', v('twitter'));
     schema.socials.instagram = socialURL('instagram', v('instagram'));
-    schema.socials.website = v('website');
+    schema.socials.website = safeInputUrl(v('website'));
     schema.theme.primaryColor = byId('primaryColor').value;
     schema.theme.secondaryColor = byId('secondaryColor').value;
     schema.theme.accentColor = byId('accentColor').value;
@@ -628,9 +678,9 @@ function collectSchema() {
     schema.theme.animations.enabled = byId('animEnabled').checked;
     schema.theme.animations.style = byId('animStyle').value;
     schema.integrations.githubCommits = byId('intGithub').checked;
-    schema.integrations.githubUsername = v('ghUsername');
+    schema.integrations.githubUsername = safeUsername(v('ghUsername')).replace(/[^a-zA-Z0-9-]/g, '').slice(0, 39);
     schema.integrations.spotifyPlaying = byId('intSpotify').checked;
-    schema.siteURL = v('siteURL');
+    schema.siteURL = safeInputUrl(v('siteURL'));
     var blocks = selectedBlocks.slice();
     if (schema.integrations.githubCommits && !blocks.some(function(block) { return block.type === 'githubFeed'; })) {
         blocks.push({ id: 'github-auto', type: 'githubFeed', cols: 6, order: blocks.length, data: {} });
@@ -645,17 +695,18 @@ function collectSchema() {
 /* Parses comma-separated skill input into structured skills. */
 function parseSkills(raw) {
     if (!raw) return [{ name: 'HTML/CSS', level: 90 }, { name: 'JavaScript', level: 85 }, { name: 'React', level: 75 }];
-    return raw.split(',').map(function(part, index) {
+    return raw.split(',').slice(0, 30).map(function(part, index) {
         var pieces = part.trim().split(':');
-        return { name: (pieces[0] || 'Skill').trim(), level: parseInt(pieces[1], 10) || Math.max(60, 90 - index * 8) };
+        return { name: cleanText(pieces[0] || 'Skill', 60), level: parseInt(pieces[1], 10) || Math.max(60, 90 - index * 8) };
     });
 }
 
 /* Builds a social URL from a platform username. */
 function socialURL(platform, username) {
-    if (!username) return '';
-    if (/^https?:\/\//i.test(username)) return username;
-    return { github: 'https://github.com/', linkedin: 'https://linkedin.com/in/', twitter: 'https://twitter.com/', instagram: 'https://instagram.com/' }[platform] + username.replace(/^@/, '');
+    var cleaned = safeUsername(username);
+    if (!cleaned) return '';
+    if (/^https?:\/\//i.test(username)) return safeInputUrl(username);
+    return { github: 'https://github.com/', linkedin: 'https://linkedin.com/in/', twitter: 'https://twitter.com/', instagram: 'https://instagram.com/' }[platform] + cleaned;
 }
 
 /* Schedules the live preview rebuild with debounce. */

@@ -17,6 +17,51 @@ function attr(value) {
     return esc(value).replace(/`/g, '&#096;');
 }
 
+function pick(value, allowed, fallback) {
+    return allowed.indexOf(value) !== -1 ? value : fallback;
+}
+
+function safeColor(value, fallback) {
+    return /^#[0-9a-f]{6}$/i.test(String(value || '')) ? value : fallback;
+}
+
+function safeFont(value) {
+    return pick(value, ['Inter', 'DM Sans', 'Sora', 'Outfit', 'Plus Jakarta Sans', 'Manrope', 'Space Grotesk', 'IBM Plex Sans'], 'Inter');
+}
+
+function safeRadius(value) {
+    return pick(value, ['0', '0.375rem', '0.75rem', '1.25rem', '9999px'], '0.75rem');
+}
+
+function safeEmail(value) {
+    var email = String(value || '').trim();
+    return /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(email) && email.length <= 254 ? email : '';
+}
+
+function safeExternalUrl(value) {
+    var raw = String(value || '').trim();
+    if (!raw || raw.length > 2048) return '';
+    if (!/^https?:\/\//i.test(raw)) return '';
+    try {
+        var parsed = new URL(raw);
+        if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return '';
+        return parsed.href;
+    } catch (error) {
+        return '';
+    }
+}
+
+function safeDataImage(value, types) {
+    var raw = String(value || '');
+    var allowed = types || ['jpeg', 'png', 'webp'];
+    var match = raw.match(/^data:image\/([a-z0-9.+-]+);base64,[a-z0-9+/=]+$/i);
+    return match && allowed.indexOf(match[1].toLowerCase()) !== -1 ? raw : '';
+}
+
+function linkAttrs(url) {
+    return ' href="' + attr(url) + '" target="_blank" rel="noopener noreferrer"';
+}
+
 /* Keeps a numeric value inside a percentage-friendly range. */
 function clampPct(value) {
     var n = parseInt(value, 10);
@@ -47,7 +92,8 @@ var BLOCK_REGISTRY = {
 
 /* Returns profile image markup source with inline base64 support. */
 function getProfileSrc(schema) {
-    return schema.meta && schema.meta.photoBase64 ? schema.meta.photoBase64 : 'assets/img/profile.jpg';
+    var photo = schema.meta && schema.meta.photoBase64 ? safeDataImage(schema.meta.photoBase64, ['jpeg', 'png', 'webp']) : '';
+    return photo || 'assets/img/profile.jpg';
 }
 
 /* Builds a fallback favicon SVG data URL from the first initial. */
@@ -56,7 +102,7 @@ function buildInitialFavicon(schema) {
     var name = (schema.meta && schema.meta.name) || 'P';
     var initial = esc(name.trim().charAt(0).toUpperCase() || 'P');
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
-        + '<circle cx="32" cy="32" r="32" fill="' + (theme.primaryColor || '#0C9B70') + '"/>'
+        + '<circle cx="32" cy="32" r="32" fill="' + safeColor(theme.primaryColor, '#0C9B70') + '"/>'
         + '<text x="32" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#fff">' + initial + '</text>'
         + '</svg>';
     return 'data:image/svg+xml,' + encodeURIComponent(svg);
@@ -64,7 +110,8 @@ function buildInitialFavicon(schema) {
 
 /* Resolves the favicon href for the generated site. */
 function getFaviconHref(schema) {
-    return schema.meta && schema.meta.faviconBase64 ? schema.meta.faviconBase64 : buildInitialFavicon(schema);
+    var favicon = schema.meta && schema.meta.faviconBase64 ? safeDataImage(schema.meta.faviconBase64, ['png', 'x-icon', 'vnd.microsoft.icon']) : '';
+    return favicon || buildInitialFavicon(schema);
 }
 
 /* Returns the first projects block data from a schema. */
@@ -88,6 +135,7 @@ var blockRenderers = {
         var anim = schema.theme.animations.style;
         var socials = renderHeroSocials(schema);
         var photoSrc = getProfileSrc(schema);
+        var resumeUrl = safeExternalUrl(m.resumeUrl);
         return '<section class="bento-block block--hero" data-reveal="' + attr(anim) + '">'
             + '<div class="hero__content">'
             + '<p class="hero__greeting">Hello, I am</p>'
@@ -97,20 +145,21 @@ var blockRenderers = {
             + '<div class="hero__actions">'
             + '<a href="contact.html" class="btn btn--primary">Get In Touch</a>'
             + '<a href="#projects" class="btn btn--outline">View Work</a>'
-            + (m.resumeUrl ? '<a href="' + attr(m.resumeUrl) + '" target="_blank" class="btn btn--outline">Download Resume</a>' : '')
+            + (resumeUrl ? '<a' + linkAttrs(resumeUrl) + ' class="btn btn--outline">Download Resume</a>' : '')
             + '</div>'
             + socials
             + '</div>'
-            + '<div class="hero__img-wrap"><img src="' + attr(photoSrc) + '" alt="' + attr(m.name || 'Profile photo') + '" class="hero__img" onerror="this.src=\'' + AVATAR_SVG + '\'"></div>'
+            + '<div class="hero__img-wrap"><img src="' + attr(photoSrc) + '" alt="' + attr(m.name || 'Profile photo') + '" class="hero__img"></div>'
             + '</section>';
     },
 
     bio: function(block, schema) {
         var m = schema.meta || {};
+        var email = safeEmail(m.email);
         return '<section class="bento-block block--bio" data-reveal="' + attr(schema.theme.animations.style) + '">'
             + renderTitle('About Me')
             + '<p class="bio__text" data-schema-field="meta.bio">' + esc(m.bio || 'Write a short bio about your background, interests, and work.') + '</p>'
-            + (m.email ? '<a href="mailto:' + attr(m.email) + '" class="bio__email" data-schema-field="meta.email"><i class="bx bx-envelope"></i> ' + esc(m.email) + '</a>' : '')
+            + (email ? '<a href="mailto:' + attr(email) + '" class="bio__email" data-schema-field="meta.email"><i class="bx bx-envelope"></i> ' + esc(email) + '</a>' : '')
             + '</section>';
     },
 
@@ -154,8 +203,11 @@ var blockRenderers = {
     projects: function(block, schema) {
         var projects = block.data && block.data.projects && block.data.projects.length ? block.data.projects : getProjects(schema);
         var cards = projects.map(function(project, index) {
-            var media = project.imageBase64
-                ? '<img src="' + attr(project.imageBase64) + '" alt="' + attr(project.title || 'Project image') + '" class="project__img">'
+            var image = safeDataImage(project.imageBase64, ['jpeg', 'png', 'webp']);
+            var liveUrl = safeExternalUrl(project.link);
+            var sourceUrl = safeExternalUrl(project.source);
+            var media = image
+                ? '<img src="' + attr(image) + '" alt="' + attr(project.title || 'Project image') + '" class="project__img">'
                 : '<div class="project__img-placeholder" style="background:linear-gradient(135deg, var(--primary), var(--accent));"></div>';
             return '<article class="project__card">'
                 + media
@@ -163,8 +215,8 @@ var blockRenderers = {
                 + '<h3 class="project__title" data-schema-field="project.title.' + index + '">' + esc(project.title || 'Untitled Project') + '</h3>'
                 + '<p class="project__desc" data-schema-field="project.desc.' + index + '">' + esc(project.desc || 'Describe this project.') + '</p>'
                 + '<div class="project__links">'
-                + (project.link ? '<a href="' + attr(project.link) + '" target="_blank" class="btn btn--primary btn--sm">Live Demo</a>' : '')
-                + (project.source ? '<a href="' + attr(project.source) + '" target="_blank" class="btn btn--outline btn--sm">Source</a>' : '')
+                + (liveUrl ? '<a' + linkAttrs(liveUrl) + ' class="btn btn--primary btn--sm">Live Demo</a>' : '')
+                + (sourceUrl ? '<a' + linkAttrs(sourceUrl) + ' class="btn btn--outline btn--sm">Source</a>' : '')
                 + '</div>'
                 + '</article>';
         }).join('');
@@ -177,11 +229,11 @@ var blockRenderers = {
     socialLinks: function(block, schema) {
         var s = schema.socials || {};
         var links = '';
-        if (s.github) links += '<a href="' + attr(s.github) + '" target="_blank" class="social__link"><i class="bx bxl-github"></i><span>GitHub</span><i class="bx bx-chevron-right social__arrow"></i></a>';
-        if (s.linkedin) links += '<a href="' + attr(s.linkedin) + '" target="_blank" class="social__link"><i class="bx bxl-linkedin"></i><span>LinkedIn</span><i class="bx bx-chevron-right social__arrow"></i></a>';
-        if (s.twitter) links += '<a href="' + attr(s.twitter) + '" target="_blank" class="social__link"><i class="bx bxl-twitter"></i><span>X / Twitter</span><i class="bx bx-chevron-right social__arrow"></i></a>';
-        if (s.instagram) links += '<a href="' + attr(s.instagram) + '" target="_blank" class="social__link"><i class="bx bxl-instagram"></i><span>Instagram</span><i class="bx bx-chevron-right social__arrow"></i></a>';
-        if (s.website) links += '<a href="' + attr(s.website) + '" target="_blank" class="social__link"><i class="bx bx-globe"></i><span>Website</span><i class="bx bx-chevron-right social__arrow"></i></a>';
+        if (s.github) links += '<a' + linkAttrs(s.github) + ' class="social__link"><i class="bx bxl-github"></i><span>GitHub</span><i class="bx bx-chevron-right social__arrow"></i></a>';
+        if (s.linkedin) links += '<a' + linkAttrs(s.linkedin) + ' class="social__link"><i class="bx bxl-linkedin"></i><span>LinkedIn</span><i class="bx bx-chevron-right social__arrow"></i></a>';
+        if (s.twitter) links += '<a' + linkAttrs(s.twitter) + ' class="social__link"><i class="bx bxl-twitter"></i><span>X / Twitter</span><i class="bx bx-chevron-right social__arrow"></i></a>';
+        if (s.instagram) links += '<a' + linkAttrs(s.instagram) + ' class="social__link"><i class="bx bxl-instagram"></i><span>Instagram</span><i class="bx bx-chevron-right social__arrow"></i></a>';
+        if (s.website) links += '<a' + linkAttrs(s.website) + ' class="social__link"><i class="bx bx-globe"></i><span>Website</span><i class="bx bx-chevron-right social__arrow"></i></a>';
         return '<section class="bento-block block--socials" data-reveal="' + attr(schema.theme.animations.style) + '">'
             + renderTitle('Connect')
             + '<div class="socials__list">' + (links || '<p class="muted">No social links added yet.</p>') + '</div>'
@@ -190,16 +242,17 @@ var blockRenderers = {
 
     contact: function(block, schema) {
         var m = schema.meta || {};
+        var email = safeEmail(m.email);
         return '<section class="bento-block block--contact" data-reveal="' + attr(schema.theme.animations.style) + '">'
             + renderTitle('Get In Touch')
-            + '<form class="contact__form" onsubmit="handleContact(event)">'
+            + '<form class="contact__form">'
             + '<input type="text" class="contact__input" placeholder="Your Name" required>'
             + '<input type="email" class="contact__input" placeholder="Your Email" required>'
             + '<textarea class="contact__input" placeholder="Your Message" rows="5" required></textarea>'
             + '<button type="submit" class="btn btn--primary">Send Message</button>'
             + '</form>'
             + '<p id="contactMsg" style="display:none;" class="contact__success">Thanks. Connect a form service to receive messages.</p>'
-            + (m.email ? '<p class="contact__direct">Or email directly: <a href="mailto:' + attr(m.email) + '" data-schema-field="meta.email">' + esc(m.email) + '</a></p>' : '')
+            + (email ? '<p class="contact__direct">Or email directly: <a href="mailto:' + attr(email) + '" data-schema-field="meta.email">' + esc(email) + '</a></p>' : '')
             + '</section>';
     },
 
@@ -218,18 +271,17 @@ var blockRenderers = {
     },
 
     githubFeed: function(block, schema) {
-        var username = schema.integrations.githubUsername || 'yourusername';
+        var username = String(schema.integrations.githubUsername || 'yourusername').replace(/[^a-zA-Z0-9-]/g, '').slice(0, 39) || 'yourusername';
         return '<section class="bento-block block--github" data-reveal="' + attr(schema.theme.animations.style) + '">'
             + renderTitle('Recent Commits')
-            + '<div id="gh-feed" class="github__feed"><div class="github__loading"><i class="bx bx-loader-alt bx-spin"></i> Loading commits...</div></div>'
-            + (schema.__previewMode ? '' : '<script>window.__GH_USER = "' + attr(username) + '";<\/script>')
+            + '<div id="gh-feed" class="github__feed" data-github-user="' + attr(username) + '"><div class="github__loading"><i class="bx bx-loader-alt bx-spin"></i> Loading commits...</div></div>'
             + '</section>';
     },
 
     spotify: function(block, schema) {
         return '<section class="bento-block block--spotify" data-reveal="' + attr(schema.theme.animations.style) + '">'
             + renderTitle('Now Playing')
-            + '<div id="spotify-widget" class="spotify__widget"><p class="spotify__idle">Configure your Spotify token in assets/js/main.js.</p></div>'
+            + '<div id="spotify-widget" class="spotify__widget"><p class="spotify__idle">Server-side Spotify proxy required for private tokens.</p></div>'
             + '</section>';
     }
 };
@@ -238,10 +290,10 @@ var blockRenderers = {
 function renderHeroSocials(schema) {
     var s = schema.socials || {};
     var links = '';
-    if (s.github) links += '<a href="' + attr(s.github) + '" target="_blank" class="hero__social" aria-label="GitHub"><i class="bx bxl-github"></i></a>';
-    if (s.linkedin) links += '<a href="' + attr(s.linkedin) + '" target="_blank" class="hero__social" aria-label="LinkedIn"><i class="bx bxl-linkedin"></i></a>';
-    if (s.twitter) links += '<a href="' + attr(s.twitter) + '" target="_blank" class="hero__social" aria-label="X"><i class="bx bxl-twitter"></i></a>';
-    if (s.instagram) links += '<a href="' + attr(s.instagram) + '" target="_blank" class="hero__social" aria-label="Instagram"><i class="bx bxl-instagram"></i></a>';
+    if (s.github) links += '<a' + linkAttrs(s.github) + ' class="hero__social" aria-label="GitHub"><i class="bx bxl-github"></i></a>';
+    if (s.linkedin) links += '<a' + linkAttrs(s.linkedin) + ' class="hero__social" aria-label="LinkedIn"><i class="bx bxl-linkedin"></i></a>';
+    if (s.twitter) links += '<a' + linkAttrs(s.twitter) + ' class="hero__social" aria-label="X"><i class="bx bxl-twitter"></i></a>';
+    if (s.instagram) links += '<a' + linkAttrs(s.instagram) + ' class="hero__social" aria-label="Instagram"><i class="bx bxl-instagram"></i></a>';
     return links ? '<div class="hero__socials">' + links + '</div>' : '';
 }
 
@@ -274,23 +326,26 @@ function buildPageHead(schema, pageName, previewMode) {
     var m = schema.meta || {};
     var label = pageName === 'contact' ? 'Contact' : 'Portfolio';
     var title = (m.name || 'Portfolio') + (m.title ? ' - ' + m.title : '');
+    var siteUrl = safeExternalUrl(schema.siteURL);
+    var pageUrl = siteUrl ? siteUrl.replace(/\/+$/, '') + '/' + pageName + '.html' : pageName + '.html';
+    var ogImage = safeDataImage(m.photoBase64, ['jpeg', 'png', 'webp']) || 'assets/img/profile.jpg';
     return '<!DOCTYPE html><html lang="en"><head>'
         + '<meta charset="UTF-8">'
         + '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
         + '<meta name="description" content="' + attr(m.tagline || m.bio || title) + '">'
         + '<meta name="author" content="' + attr(m.name || '') + '">'
         + '<meta name="referrer" content="strict-origin-when-cross-origin">'
-        + '<meta name="theme-color" content="' + attr((schema.theme && schema.theme.primaryColor) || '#0C9B70') + '">'
-        + '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; connect-src \'self\' https://api.github.com; img-src \'self\' data: https:; style-src \'self\' \'unsafe-inline\' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src \'self\' https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src \'self\' \'unsafe-inline\' https://unpkg.com; base-uri \'self\'; form-action \'self\';">'
+        + '<meta name="theme-color" content="' + attr(safeColor(schema.theme && schema.theme.primaryColor, '#0C9B70')) + '">'
+        + '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; connect-src \'self\' https://api.github.com; img-src \'self\' data: https:; style-src \'self\' \'unsafe-inline\' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src \'self\' https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src \'self\' https://unpkg.com; base-uri \'self\'; form-action \'self\'; object-src \'none\'; frame-ancestors \'none\'; upgrade-insecure-requests;">'
         + '<meta property="og:title" content="' + attr(title) + '">'
         + '<meta property="og:description" content="' + attr(m.tagline || '') + '">'
-        + '<meta property="og:image" content="' + attr((m.photoBase64 && m.photoBase64.indexOf('data:') === 0) ? m.photoBase64 : 'assets/img/profile.jpg') + '">'
-        + '<meta property="og:url" content="' + attr(schema.siteURL ? schema.siteURL.replace(/\/+$/, '') + '/' + pageName + '.html' : pageName + '.html') + '">'
+        + '<meta property="og:image" content="' + attr(ogImage) + '">'
+        + '<meta property="og:url" content="' + attr(pageUrl) + '">'
         + '<meta property="og:type" content="website">'
         + '<meta name="twitter:card" content="summary">'
         + '<meta name="twitter:title" content="' + attr(title) + '">'
         + '<title>' + esc(label) + ' - ' + esc(m.name || 'Portfolio') + '</title>'
-        + (schema.siteURL ? '<link rel="canonical" href="' + attr(schema.siteURL.replace(/\/+$/, '') + '/' + pageName + '.html') + '">' : '')
+        + (siteUrl ? '<link rel="canonical" href="' + attr(pageUrl) + '">' : '')
         + '<link rel="icon" href="' + attr(getFaviconHref(schema)) + '">'
         + '<link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">'
         + (previewMode ? '<style>' + buildCSS(schema) + '</style>' : '<link rel="stylesheet" href="assets/css/styles.css">')
@@ -301,7 +356,8 @@ function buildPageHead(schema, pageName, previewMode) {
 function buildNav(schema, active) {
     var m = schema.meta || {};
     var themeBtn = schema.theme.darkMode ? '<button class="change-theme bx bx-moon" id="theme-button" type="button" aria-label="Toggle theme"></button>' : '';
-    var resume = m.resumeUrl ? '<a href="' + attr(m.resumeUrl) + '" target="_blank" class="nav__link nav__resume">Resume</a>' : '';
+    var resumeUrl = safeExternalUrl(m.resumeUrl);
+    var resume = resumeUrl ? '<a' + linkAttrs(resumeUrl) + ' class="nav__link nav__resume">Resume</a>' : '';
     return '<header class="l-header"><nav class="nav">'
         + '<a href="index.html" class="nav__logo">' + esc(m.name || 'Portfolio') + '</a>'
         + '<div class="nav__menu" id="nav-menu"><ul class="nav__list">'
@@ -318,14 +374,14 @@ function buildFooter(schema) {
     var m = schema.meta || {};
     var s = schema.socials || {};
     var icons = '';
-    if (s.github) icons += '<a href="' + attr(s.github) + '" target="_blank" class="footer__icon" aria-label="GitHub"><i class="bx bxl-github"></i></a>';
-    if (s.linkedin) icons += '<a href="' + attr(s.linkedin) + '" target="_blank" class="footer__icon" aria-label="LinkedIn"><i class="bx bxl-linkedin"></i></a>';
-    if (s.twitter) icons += '<a href="' + attr(s.twitter) + '" target="_blank" class="footer__icon" aria-label="X"><i class="bx bxl-twitter"></i></a>';
-    if (s.instagram) icons += '<a href="' + attr(s.instagram) + '" target="_blank" class="footer__icon" aria-label="Instagram"><i class="bx bxl-instagram"></i></a>';
+    if (s.github) icons += '<a' + linkAttrs(s.github) + ' class="footer__icon" aria-label="GitHub"><i class="bx bxl-github"></i></a>';
+    if (s.linkedin) icons += '<a' + linkAttrs(s.linkedin) + ' class="footer__icon" aria-label="LinkedIn"><i class="bx bxl-linkedin"></i></a>';
+    if (s.twitter) icons += '<a' + linkAttrs(s.twitter) + ' class="footer__icon" aria-label="X"><i class="bx bxl-twitter"></i></a>';
+    if (s.instagram) icons += '<a' + linkAttrs(s.instagram) + ' class="footer__icon" aria-label="Instagram"><i class="bx bxl-instagram"></i></a>';
     return '<footer class="footer"><div class="footer__inner">'
         + '<span class="footer__copy">&copy; ' + currentYear() + ' ' + esc(m.name || 'Portfolio') + '</span>'
         + '<div class="footer__socials">' + icons + '</div>'
-        + '<span class="footer__credits">Built with <a href="https://github.com/prvthmpcypher" target="_blank">ProfileGen</a></span>'
+        + '<span class="footer__credits">Built with <a href="https://github.com/prvthmpcypher" target="_blank" rel="noopener noreferrer">ProfileGen</a></span>'
         + '</div></footer>';
 }
 
@@ -342,7 +398,7 @@ function buildMainJS(schema, blocks) {
     var types = (blocks || []).map(function(block) { return block.type; });
     var out = '/* Auto-generated by ProfileGen. */\n';
     out += 'const navToggle=document.getElementById("nav-toggle"),navMenu=document.getElementById("nav-menu");if(navToggle&&navMenu){navToggle.addEventListener("click",()=>navMenu.classList.toggle("show"));}\n';
-    out += 'function handleContact(e){e.preventDefault();const m=document.getElementById("contactMsg");if(m)m.style.display="block";}\n';
+    out += 'document.querySelectorAll(".contact__form").forEach(form=>form.addEventListener("submit",e=>{e.preventDefault();const m=document.getElementById("contactMsg");if(m)m.style.display="block";}));\n';
     if (schema.theme.darkMode) {
         out += 'const themeBtn=document.getElementById("theme-button");if(themeBtn){const apply=d=>{document.body.classList.toggle("dark-theme",d);themeBtn.className=d?"change-theme bx bx-sun":"change-theme bx bx-moon";localStorage.setItem("theme",d?"dark":"light");};themeBtn.addEventListener("click",()=>apply(!document.body.classList.contains("dark-theme")));apply(localStorage.getItem("theme")==="dark");}\n';
     }
@@ -353,7 +409,7 @@ function buildMainJS(schema, blocks) {
         out += 'document.querySelectorAll(".bento-block").forEach(card=>{card.addEventListener("mousemove",e=>{const r=card.getBoundingClientRect();const x=(e.clientX-r.left)/r.width-.5;const y=(e.clientY-r.top)/r.height-.5;card.style.transform=`perspective(900px) rotateX(${-y*5}deg) rotateY(${x*5}deg) translateY(-3px)`;});card.addEventListener("mouseleave",()=>card.style.transform="");});\n';
     }
     if (types.indexOf('githubFeed') !== -1) {
-        out += 'const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/[\\u0027]/g,"&#039;");async function loadGithub(){const el=document.getElementById("gh-feed"),user=window.__GH_USER;if(!el||!user)return;try{const res=await fetch(`https://api.github.com/users/${encodeURIComponent(user)}/events/public?per_page=8`);const data=await res.json();el.innerHTML=data.slice(0,5).map(ev=>{const commit=ev.payload&&ev.payload.commits&&ev.payload.commits[0];return `<div class="gh-commit"><div class="gh-repo">${esc(ev.repo&&ev.repo.name)}</div><div class="gh-msg">${esc((commit&&commit.message)||ev.type)}</div><div class="gh-date">${esc(new Date(ev.created_at).toLocaleDateString())}</div></div>`;}).join("");}catch(e){el.innerHTML="<p class=\\"muted\\">Unable to load commits.</p>";}}loadGithub();\n';
+        out += 'const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/[\\u0027]/g,"&#039;");async function loadGithub(){const el=document.getElementById("gh-feed"),user=el&&el.dataset.githubUser;if(!el||!user)return;try{const res=await fetch(`https://api.github.com/users/${encodeURIComponent(user)}/events/public?per_page=8`);const data=await res.json();el.innerHTML=data.slice(0,5).map(ev=>{const commit=ev.payload&&ev.payload.commits&&ev.payload.commits[0];return `<div class="gh-commit"><div class="gh-repo">${esc(ev.repo&&ev.repo.name)}</div><div class="gh-msg">${esc((commit&&commit.message)||ev.type)}</div><div class="gh-date">${esc(new Date(ev.created_at).toLocaleDateString())}</div></div>`;}).join("");}catch(e){el.innerHTML="<p class=\\"muted\\">Unable to load commits.</p>";}}loadGithub();\n';
     }
     if (schema.theme.pageTransitions) {
         out += 'document.body.classList.add("page-ready");document.addEventListener("click",e=>{const a=e.target.closest("a");if(!a||a.target||a.origin!==location.origin||!a.getAttribute("href").endsWith(".html"))return;e.preventDefault();document.body.classList.add("page-exit");setTimeout(()=>location.href=a.href,300);});\n';
@@ -365,16 +421,21 @@ function buildMainJS(schema, blocks) {
 function buildCSS(schema) {
     var t = schema.theme || {};
     var gap = t.spacing === 'compact' ? '.75rem' : t.spacing === 'relaxed' ? '2rem' : '1.25rem';
-    var font = t.fontFamily || 'Inter';
-    var clean = t.aesthetic !== 'brutalism' && t.aesthetic !== 'glassmorphism';
+    var font = safeFont(t.fontFamily);
+    var primary = safeColor(t.primaryColor, '#0C9B70');
+    var secondary = safeColor(t.secondaryColor, '#042444');
+    var accent = safeColor(t.accentColor, '#1db88e');
+    var radius = safeRadius(t.borderRadius);
+    var aesthetic = pick(t.aesthetic, ['clean', 'glassmorphism', 'brutalism'], 'clean');
+    var clean = aesthetic !== 'brutalism' && aesthetic !== 'glassmorphism';
     var blockBase = clean
         ? '.bento-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 2px 14px rgba(15,23,42,.06);transition:transform .2s,box-shadow .2s}.bento-block:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(15,23,42,.1)}'
-        : t.aesthetic === 'glassmorphism'
+        : aesthetic === 'glassmorphism'
             ? '.bento-block{background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.45);border-radius:var(--radius);box-shadow:0 20px 60px rgba(15,23,42,.15);backdrop-filter:blur(18px)}body{background:linear-gradient(135deg,var(--primary),var(--secondary)) fixed}'
             : '.bento-block{background:#fff;border:3px solid #111;border-radius:0;box-shadow:6px 6px 0 #111}.btn{border-radius:0!important;border-width:2px!important;box-shadow:3px 3px 0 #111}';
     var transitionCSS = t.pageTransitions ? 'body{opacity:0;transition:opacity .3s ease}body.page-ready{opacity:1}body.page-exit{opacity:0}\n' : '';
     return '@import url("https://fonts.googleapis.com/css2?family=' + font.replace(/ /g, '+') + ':wght@400;500;600;700;800&display=swap");\n'
-        + ':root{--primary:' + (t.primaryColor || '#0C9B70') + ';--secondary:' + (t.secondaryColor || '#042444') + ';--accent:' + (t.accentColor || '#1db88e') + ';--font:"' + font + '",system-ui,sans-serif;--radius:' + (t.borderRadius || '0.75rem') + ';--gap:' + gap + ';--background:#f8fafc;--surface:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--z-nav:100}\n'
+        + ':root{--primary:' + primary + ';--secondary:' + secondary + ';--accent:' + accent + ';--font:"' + font + '",system-ui,sans-serif;--radius:' + radius + ';--gap:' + gap + ';--background:#f8fafc;--surface:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--z-nav:100}\n'
         + '*,::before,::after{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:var(--font);background:var(--background);color:var(--text);line-height:1.6}h1,h2,h3,p{margin:0}a{text-decoration:none;color:inherit}img{max-width:100%;display:block}.muted{color:var(--muted);font-size:.9rem}' + transitionCSS
         + (t.darkMode ? 'body.dark-theme{--background:#0f172a;--surface:#1e293b;--text:#f8fafc;--muted:#94a3b8;--border:#334155}body.dark-theme .l-header{background:rgba(15,23,42,.92)}\n' : '')
         + '.l-header{position:fixed;top:.75rem;left:.75rem;right:.75rem;z-index:var(--z-nav);background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border:1px solid rgba(15,23,42,.08);border-radius:12px;box-shadow:0 8px 28px rgba(15,23,42,.08)}.nav{max-width:1100px;margin:0 auto;padding:.85rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}.nav__logo{font-weight:800;color:var(--primary)}.nav__list{display:flex;align-items:center;gap:1rem;list-style:none;margin:0;padding:0}.nav__link{font-weight:700;font-size:.9rem;color:var(--muted)}.nav__link:hover,.nav__link.active-link{color:var(--primary)}.nav__resume{border:1px solid var(--primary);padding:.42rem .7rem;border-radius:var(--radius);color:var(--primary)}.nav__btns{display:flex;align-items:center;gap:.65rem}.change-theme,.nav__toggle{border:0;background:transparent;color:var(--text);font-size:1.25rem;cursor:pointer}.nav__toggle{display:none}@media(max-width:768px){.nav__toggle{display:block}.nav__menu{display:none;position:fixed;top:4.5rem;left:.75rem;right:.75rem;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem}.nav__menu.show{display:block}.nav__list{display:grid;gap:.75rem}}\n'
@@ -398,8 +459,9 @@ function build404Page(schema) {
 
 /* Builds a sitemap XML file when a site URL is supplied. */
 function buildSitemap(schema) {
-    if (!schema.siteURL) return '';
-    var base = schema.siteURL.replace(/\/+$/, '');
+    var siteUrl = safeExternalUrl(schema.siteURL);
+    if (!siteUrl) return '';
+    var base = siteUrl.replace(/\/+$/, '');
     var today = new Date().toISOString().slice(0, 10);
     return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + '<url><loc>' + esc(base) + '/index.html</loc><lastmod>' + today + '</lastmod></url>\n'
@@ -409,9 +471,20 @@ function buildSitemap(schema) {
 
 /* Builds robots.txt when a site URL is supplied. */
 function buildRobots(schema) {
-    if (!schema.siteURL) return '';
-    var base = schema.siteURL.replace(/\/+$/, '');
+    var siteUrl = safeExternalUrl(schema.siteURL);
+    if (!siteUrl) return '';
+    var base = siteUrl.replace(/\/+$/, '');
     return 'User-agent: *\nAllow: /\nSitemap: ' + base + '/sitemap.xml\n';
+}
+
+function buildSecurityHeaders() {
+    return '/*\n'
+        + '  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\n'
+        + '  X-Content-Type-Options: nosniff\n'
+        + '  X-Frame-Options: DENY\n'
+        + '  Referrer-Policy: strict-origin-when-cross-origin\n'
+        + '  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()\n'
+        + '  Content-Security-Policy: default-src \'self\'; connect-src \'self\' https://api.github.com; img-src \'self\' data: https:; style-src \'self\' \'unsafe-inline\' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src \'self\' https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src \'self\' https://unpkg.com; base-uri \'self\'; form-action \'self\'; object-src \'none\'; frame-ancestors \'none\'; upgrade-insecure-requests\n';
 }
 
 /* Builds an updated README that does not require manual file editing. */
@@ -442,6 +515,7 @@ function buildZIP(schema) {
     }
     zip.file('assets/css/styles.css', buildCSS(schema));
     zip.file('assets/js/main.js', buildMainJS(schema, allBlocks));
+    zip.file('_headers', buildSecurityHeaders());
     zip.file('config.json', JSON.stringify(schema, null, 2));
     zip.file('README.md', buildReadme(schema));
     if (!(schema.meta && schema.meta.photoBase64)) {
