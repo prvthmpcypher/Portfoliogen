@@ -7,6 +7,7 @@ var TOTAL_STEPS = 7;
 var currentStep = 1;
 var previewTimer = null;
 var editMode = false;
+var stepTitles = ['Identity','Pages & Layout','Content','Social & Contact','Design & Theme','Effects & Motion','Preview & Export'];
 
 /* ===== SCHEMA STATE ===== */
 var schema = {
@@ -27,6 +28,7 @@ var schema = {
   pages: [],
   integrations: { githubCommits:false, githubUsername:'' },
   contact: { heading:'Let\'s Work Together', subtext:'', desc:'', showForm:true, showMap:false, mapUrl:'', showAvailability:true, status:'available' },
+  footer: { about:'' },
   testimonials: [],
   availabilityBadge: '✅ Available for new projects',
   siteURL: '',
@@ -83,6 +85,15 @@ function $id(id){ return document.getElementById(id); }
 function v(id){ var el=$id(id); return el?el.value.trim():''; }
 function setVal(id,val){ var el=$id(id); if(el) el.value=val||''; }
 function esc2(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function slugifyPageName(s){
+  var slug=String(s||'page').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  return slug||'page';
+}
+function customSelectValue(id){
+  var el=$id(id), custom=$id(id+'Custom');
+  if(!el) return '';
+  return el.value==='__custom__' && custom ? custom.value.trim() : el.value.trim();
+}
 
 function getBlocksByType(type){
   var blocks=[];
@@ -163,6 +174,9 @@ function initWizard(){
   setupUploadZone('photoDrop','photoInput','photoError',handlePhoto);
   setupUploadZone('faviconDrop','faviconInput','faviconError',handleFavicon);
   setupColorPickers();
+  setupCustomSelects();
+  setupInputHelp();
+  setupIdentityCompact();
   buildStyleGrid();
   buildGradientGrid();
   buildEffectGrids();
@@ -175,6 +189,117 @@ function initWizard(){
   document.addEventListener('input', onAnyInput, true);
   document.addEventListener('change', onAnyInput, true);
   showStep(1);
+}
+
+function setupCustomSelects(){
+  ['availabilityStatus','fontFamily','borderRadius','spacingSelect','heroLayout','gradientType','gradientDir'].forEach(function(id){
+    var select=$id(id); if(!select||select.dataset.customReady)return;
+    select.dataset.customReady='1';
+    var opt=document.createElement('option');
+    opt.value='__custom__';
+    opt.textContent='Other - Not listed? Type your own';
+    select.appendChild(opt);
+    var input=document.createElement('input');
+    input.type='text';
+    input.id=id+'Custom';
+    input.className='custom-select-input';
+    input.placeholder='Not listed? Type your own';
+    select.insertAdjacentElement('afterend', input);
+    select.addEventListener('change',function(){
+      input.classList.toggle('active', select.value==='__custom__');
+      if(select.value==='__custom__') input.focus();
+      schedPreview();
+    });
+    input.addEventListener('input', schedPreview);
+  });
+  document.querySelectorAll('input[list]').forEach(function(input){
+    if(input.dataset.otherReady)return;
+    input.dataset.otherReady='1';
+    var note=document.createElement('small');
+    note.className='help-note';
+    note.textContent='Not listed? Type your own.';
+    input.insertAdjacentElement('afterend', note);
+  });
+}
+
+function setupInputHelp(){
+  var helpById={
+    fullName:'Appears as the site logo text, hero name, footer copyright, and SEO author.',
+    profTitle:'Appears under your name in the hero and resume header.',
+    tagline:'Appears in the hero intro and search/social preview description.',
+    bio:'Appears in About sections and the resume summary.',
+    email:'Appears in contact blocks as a mail link.',
+    phone:'Appears in contact blocks as a tap-to-call link.',
+    addressCity:'Appears near the hero and contact details.',
+    addressState:'Adds regional detail to your contact location.',
+    addressCountry:'Appears with your city in hero and contact details.',
+    timezone:'Helps visitors understand your working hours.',
+    resumeUrl:'Adds a Resume link in navigation and hero buttons.',
+    footerAbout:'Appears as a short optional line in the generated footer.',
+    siteURL:'Used to build sitemap and robots.txt URLs.',
+    seoKeywords:'Added to the generated page metadata.'
+  };
+  Object.keys(helpById).forEach(function(id){
+    var el=$id(id); if(!el||el.dataset.helpReady)return;
+    el.dataset.helpReady='1';
+    var note=document.createElement('small');
+    note.className='help-note';
+    note.textContent=helpById[id];
+    el.insertAdjacentElement('afterend', note);
+  });
+  document.querySelectorAll('.color-field').forEach(function(field){
+    if(field.dataset.helpReady)return;
+    field.dataset.helpReady='1';
+    var label=field.querySelector('label');
+    var note=document.createElement('small');
+    note.className='help-note';
+    note.textContent=(label?label.textContent:'This colour')+' controls matching accents in the generated site preview.';
+    field.appendChild(note);
+  });
+  document.querySelectorAll('.field').forEach(function(field){
+    if(field.querySelector('.help-note'))return;
+    var control=field.querySelector('input,textarea,select');
+    var label=field.querySelector('label');
+    if(!control||!label)return;
+    var note=document.createElement('small');
+    note.className='help-note';
+    note.textContent='Appears in the generated portfolio where '+label.textContent.replace('*','').trim().toLowerCase()+' is used. Leave optional fields blank to hide them.';
+    control.insertAdjacentElement('afterend', note);
+  });
+}
+
+function setupIdentityCompact(){
+  var step=document.querySelector('.step[data-step="1"]'); if(!step||step.dataset.compactReady)return;
+  step.dataset.compactReady='1';
+  var cards=[].slice.call(step.querySelectorAll(':scope > .card'));
+  if(cards.length<4)return;
+  var groups=[
+    {label:'Photo & Icon', icon:'bx-image', cards:[2,3]},
+    {label:'Education', icon:'bx-book', cards:[4]},
+    {label:'Experience', icon:'bx-briefcase', cards:[5]},
+    {label:'Awards', icon:'bx-award', cards:[6]}
+  ];
+  var jump=document.createElement('div');
+  jump.className='identity-jump';
+  jump.innerHTML=groups.map(function(g,i){
+    return'<button type="button" class="btn btn-secondary" data-identity-group="'+i+'"><i class="bx '+g.icon+'"></i> '+g.label+'</button>';
+  }).join('');
+  cards[1].insertAdjacentElement('afterend', jump);
+  groups.forEach(function(g,gi){
+    g.cards.forEach(function(ci){
+      if(cards[ci]){
+        cards[ci].classList.add('identity-extra');
+        cards[ci].dataset.identityGroup=gi;
+      }
+    });
+  });
+  jump.querySelectorAll('[data-identity-group]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var gi=btn.dataset.identityGroup;
+      var active=btn.classList.toggle('active');
+      step.querySelectorAll('.identity-extra[data-identity-group="'+gi+'"]').forEach(function(card){ card.classList.toggle('active',active); });
+    });
+  });
 }
 
 /* ===== STEP MANAGEMENT ===== */
@@ -191,6 +316,7 @@ function showStep(n){
   $id('btnBack').style.display=n===1?'none':'inline-flex';
   $id('btnNext').style.display=n===TOTAL_STEPS?'none':'inline-flex';
   $id('navInfo').textContent='Step '+n+' of '+TOTAL_STEPS;
+  document.title='PortfolioGen - '+(stepTitles[n-1]||('Step '+n))+' | Cypher Labs';
   // Side preview visible for steps 1–6
   var shell=$id('genShell');
   if(shell) shell.classList.remove('preview-open');
@@ -383,7 +509,8 @@ function buildStyleGrid(){
     var bgColor=['darkmode','retrofuturism','glitchart','cyberpunk','spatial','generativeai'].indexOf(st.id)!==-1?'#1a1a2e':'#f8fafc';
     return'<div class="style-card'+(st.id==='clean'?' selected':'')+'" data-style="'+st.id+'">'+
       '<div class="style-preview" style="background:'+bgColor+'"><div style="margin:.5rem;height:36px;'+previews[st.id]+';display:flex;align-items:center;padding:0 .5rem"><div style="width:60%;height:4px;background:rgba(12,155,112,.5);border-radius:2px"></div></div></div>'+
-      '<strong>'+st.name+'</strong><span>'+st.desc+'</span>'+
+      '<strong>'+st.name+'</strong><span>'+st.desc+'. This changes the surface treatment, shadows, spacing, and overall mood of your generated sections.</span>'+
+      '<a class="learn-link" href="https://portfoliogen-one.vercel.app/work.html" target="_blank" rel="noopener">Learn more</a>'+
     '</div>';
   }).join('');
   grid.querySelectorAll('.style-card').forEach(function(card){
@@ -435,13 +562,17 @@ function buildEffectGrid(gridId, effects, hiddenId, defaultVal){
   var grid=$id(gridId); if(!grid)return;
   grid.innerHTML=effects.map(function(ef){
     return'<div class="effect-card'+(ef.id===defaultVal?' selected':'')+'" data-val="'+ef.id+'">'+
+      '<div class="effect-preview" aria-hidden="true"></div>'+
       '<strong>'+ef.name+'</strong><span>'+ef.desc+'</span>'+
+      '<div class="effect-info">Hover this card for a live preview. This effect appears on the generated site when visitors interact with matching sections. <a href="https://portfoliogen-one.vercel.app/work.html" target="_blank" rel="noopener" style="color:var(--primary);font-weight:800">Learn more</a></div>'+
     '</div>';
   }).join('');
   grid.querySelectorAll('.effect-card').forEach(function(card){
     card.addEventListener('click',function(){
       grid.querySelectorAll('.effect-card').forEach(function(c){ c.classList.remove('selected'); });
       card.classList.add('selected');
+      card.classList.add('previewing');
+      setTimeout(function(){ card.classList.remove('previewing'); }, 900);
       $id(hiddenId).value=card.dataset.val;
       schedPreview();
     });
@@ -486,13 +617,17 @@ function buildPagesUI(){
   var tabs=$id('pageTabs'), panels=$id('pagePanels');
   if(!tabs||!panels)return;
   tabs.innerHTML=''; panels.innerHTML='';
+  var head=document.createElement('div');
+  head.className='page-tabs-head';
+  var tabWrap=document.createElement('div');
+  tabWrap.className='page-tabs';
   schema.pages.forEach(function(page,pi){
     // Tab
     var tab=document.createElement('button');
     tab.className='page-tab'+(pi===0?' active':'');
     tab.dataset.pi=pi;
     tab.innerHTML='<i class="bx '+(page.enabled?'bx-check-circle':'bx-circle')+'"></i> '+page.label;
-    tabs.appendChild(tab);
+    tabWrap.appendChild(tab);
     // Panel
     var panel=document.createElement('div');
     panel.className='page-panel'+(pi===0?' active':'');
@@ -500,8 +635,23 @@ function buildPagesUI(){
     panel.innerHTML=buildPagePanel(page, pi);
     panels.appendChild(panel);
   });
+  head.appendChild(tabWrap);
+  var addBtn=document.createElement('button');
+  addBtn.type='button';
+  addBtn.className='btn btn-primary btn-sm';
+  addBtn.id='addCustomPageBtn';
+  addBtn.innerHTML='<i class="bx bx-plus"></i> Add Page';
+  head.appendChild(addBtn);
+  tabs.appendChild(head);
+  var tips=document.createElement('div');
+  tips.className='page-tips';
+  tips.innerHTML='<div class="page-tip"><strong>Nav label</strong>Controls the text visitors click in the generated navigation and footer.</div>'+
+    '<div class="page-tip"><strong>Custom grid</strong>Use the column selector or slider to resize each block across a 12-column layout.</div>'+
+    '<div class="page-tip"><strong>Cursor arranging</strong>Drag blocks by the handle to reorder them before export.</div>';
+  tabs.appendChild(tips);
+  addBtn.addEventListener('click',addCustomPage);
   // Tab click
-  tabs.querySelectorAll('.page-tab').forEach(function(tab){
+  tabWrap.querySelectorAll('.page-tab').forEach(function(tab){
     tab.addEventListener('click',function(){
       var pi=parseInt(tab.dataset.pi,10);
       tabs.querySelectorAll('.page-tab').forEach(function(t){ t.classList.remove('active'); });
@@ -520,16 +670,23 @@ function buildPagesUI(){
 }
 
 function buildPagePanel(page, pi){
-  return'<div class="card" style="margin-bottom:.65rem">'+
+  var ruler=Array(12).fill(0).map(function(){ return'<span></span>'; }).join('');
+  var canRename=page.name!=='index';
+  return'<div class="page-settings">'+
     '<div class="field-row">'+
       '<div class="field"><label>Page Label</label><input type="text" class="page-label-input" data-pi="'+pi+'" value="'+esc2(page.label)+'"></div>'+
       '<div class="field"><label>Nav Label</label><input type="text" class="page-navlabel-input" data-pi="'+pi+'" value="'+esc2(page.navLabel||page.label)+'"></div>'+
+    '</div>'+
+    '<div class="field-row">'+
+      '<div class="field"><label>Page File</label><input type="text" class="page-name-input" data-pi="'+pi+'" value="'+esc2(page.name)+'" '+(canRename?'':'disabled')+'><small class="help-note">Creates '+esc2(page.name)+'.html. Use lowercase words like case-studies.</small></div>'+
+      '<div class="field"><label>12-column grid</label><div class="grid-preview-ruler">'+ruler+'</div><small class="help-note">Blocks snap to this grid in the generated layout.</small></div>'+
     '</div>'+
     '<div class="toggle-row" style="padding:.5rem 0">'+
       '<div class="toggle-label"><strong>Enable this page</strong><span>Generates '+page.name+'.html in the ZIP</span></div>'+
       '<label class="toggle"><input type="checkbox" class="page-enable-cb" data-pi="'+pi+'"'+(page.enabled?' checked':'')+'>'+
       '<span class="toggle-slider"></span></label>'+
     '</div>'+
+    (canRename?'<div class="button-row" style="justify-content:flex-end"><button type="button" class="btn btn-ghost btn-sm page-delete-btn" data-pi="'+pi+'"><i class="bx bx-trash"></i> Delete page</button></div>':'')+
   '</div>'+
   '<div class="block-layout">'+
     '<aside class="palette-wrap">'+
@@ -560,16 +717,35 @@ function initPagePanel(panel, pi){
       schema.pages[pi].label=inp.value;
       var tab=document.querySelector('.page-tab[data-pi="'+pi+'"]');
       if(tab) tab.innerHTML='<i class="bx '+(schema.pages[pi].enabled?'bx-check-circle':'bx-circle')+'"></i> '+inp.value;
+      schedPreview();
     });
   });
   panel.querySelectorAll('.page-navlabel-input').forEach(function(inp){
     inp.addEventListener('input',function(){ schema.pages[pi].navLabel=inp.value; schedPreview(); });
+  });
+  panel.querySelectorAll('.page-name-input').forEach(function(inp){
+    inp.addEventListener('input',function(){
+      if(schema.pages[pi].name==='index') return;
+      var next=slugifyPageName(inp.value);
+      var taken=schema.pages.some(function(p,idx){ return idx!==pi&&p.name===next; });
+      if(!taken){ schema.pages[pi].name=next; }
+      schedPreview();
+    });
+    inp.addEventListener('blur',function(){ inp.value=schema.pages[pi].name; });
   });
   panel.querySelectorAll('.page-enable-cb').forEach(function(cb){
     cb.addEventListener('change',function(){
       schema.pages[pi].enabled=cb.checked;
       var tab=document.querySelector('.page-tab[data-pi="'+pi+'"]');
       if(tab) tab.innerHTML='<i class="bx '+(cb.checked?'bx-check-circle':'bx-circle')+'"></i> '+(schema.pages[pi].label||'Page');
+      schedPreview();
+    });
+  });
+  panel.querySelectorAll('.page-delete-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      if(schema.pages[pi].name==='index') return;
+      schema.pages.splice(pi,1);
+      buildPagesUI();
       schedPreview();
     });
   });
@@ -601,6 +777,7 @@ function renderCanvas(pi){
           '<option value="8"'+(block.cols===8?' selected':'')+'>8</option>'+
           '<option value="12"'+(block.cols===12?' selected':'')+'>12</option>'+
         '</select>'+
+        '<input type="range" class="col-range" data-action="colsRange" min="3" max="12" step="1" value="'+(block.cols||12)+'" title="Adjust block width">'+
         '<button type="button" class="btn btn-ghost btn-icon btn-sm" data-action="toggle" title="Toggle"><i class="bx '+(block.disabled?'bx-show':'bx-hide')+'"></i></button>'+
         '<button type="button" class="btn btn-danger btn-icon btn-sm" data-action="remove"><i class="bx bx-x"></i></button>'+
       '</div>'+
@@ -609,7 +786,19 @@ function renderCanvas(pi){
   canvas.querySelectorAll('.canvas-block').forEach(function(row){
     var bid=row.dataset.bid; var pageIdx=parseInt(row.dataset.pi,10);
     row.querySelector('[data-action="cols"]').addEventListener('change',function(e){
-      var blk=getBlock(pageIdx,bid); if(blk){ blk.cols=parseInt(e.target.value,10); updateBentoPreview(pageIdx); schedPreview(); }
+      var blk=getBlock(pageIdx,bid); if(blk){ blk.cols=parseInt(e.target.value,10); var range=row.querySelector('[data-action="colsRange"]'); if(range) range.value=blk.cols; updateBentoPreview(pageIdx); schedPreview(); }
+    });
+    row.querySelector('[data-action="colsRange"]').addEventListener('input',function(e){
+      var allowed=[3,4,6,8,12];
+      var raw=parseInt(e.target.value,10);
+      var next=allowed.reduce(function(best,val){ return Math.abs(val-raw)<Math.abs(best-raw)?val:best; },12);
+      var blk=getBlock(pageIdx,bid);
+      if(blk){
+        blk.cols=next;
+        row.querySelector('[data-action="cols"]').value=String(next);
+        updateBentoPreview(pageIdx);
+        schedPreview();
+      }
     });
     row.querySelector('[data-action="toggle"]').addEventListener('click',function(){
       var blk=getBlock(pageIdx,bid); if(blk){ blk.disabled=!blk.disabled; renderCanvas(pageIdx); schedPreview(); }
@@ -647,6 +836,20 @@ function addBlockToPage(pi, type){
   if(type==='services') data.services=getExistingBlockItems('services','services').slice();
   blocks.push({id:id,type:type,cols:reg?reg.defaultCols:12,order:blocks.length,data:data,disabled:false});
   reorderPageBlocks(pi); renderCanvas(pi); schedPreview();
+}
+function addCustomPage(){
+  var base='new-page';
+  var n=1;
+  var name=base;
+  while(schema.pages.some(function(p){ return p.name===name; })){ n++; name=base+'-'+n; }
+  schema.pages.push({name:name,label:'New Page',navLabel:'New Page',enabled:true,custom:true,blocks:[
+    {id:'hero-'+Date.now(),type:'hero',cols:12,order:0,data:{}},
+    {id:'bio-'+Date.now(),type:'bio',cols:12,order:1,data:{}}
+  ]});
+  buildPagesUI();
+  var tab=document.querySelector('.page-tab[data-pi="'+(schema.pages.length-1)+'"]');
+  if(tab) tab.click();
+  schedPreview();
 }
 function getBlock(pi, bid){ var p=schema.pages[pi]; return p&&p.blocks.find(function(b){ return b.id===bid; }); }
 function reorderPageBlocks(pi){ var p=schema.pages[pi]; if(p) p.blocks.forEach(function(b,i){ b.order=i; }); }
@@ -810,6 +1013,7 @@ function renderProjectsList(){
   list.querySelectorAll('.proj-img-del').forEach(function(btn){
     btn.addEventListener('click',function(){ projects[parseInt(btn.dataset.pi,10)].imageBase64=''; renderProjectsList(); schedPreview(); });
   });
+  setupInputHelp();
 }
 
 /* ===== TESTIMONIALS ===== */
@@ -833,6 +1037,7 @@ function renderTestiList(){
   list.querySelectorAll('.testi-input').forEach(function(inp){
     inp.addEventListener('input',function(){ var ti=parseInt(inp.dataset.ti,10); schema.testimonials[ti][inp.dataset.field]=inp.value; schedPreview(); });
   });
+  setupInputHelp();
 }
 
 /* ===== SERVICES ===== */
@@ -870,6 +1075,7 @@ function renderServicesList(){
       syncServicesToBlocks(); renderServicesList(); schedPreview();
     });
   });
+  setupInputHelp();
 }
 
 /* ===== EDUCATION / EXPERIENCE / CERTS ===== */
@@ -933,6 +1139,7 @@ function renderEntry(type){
       inp.addEventListener('input',function(){ schema.certs[parseInt(inp.dataset.i,10)][inp.dataset.f]=inp.value; schedPreview(); });
     });
   }
+  setupInputHelp();
 }
 
 /* ===== COLLECT SCHEMA ===== */
@@ -949,15 +1156,15 @@ function collectSchema(){
   schema.theme.secondaryColor=$id('secondaryColor').value;
   schema.theme.accentColor=$id('accentColor').value;
   schema.theme.surfaceColor=$id('surfaceColor').value;
-  schema.theme.fontFamily=v('fontFamily');
-  schema.theme.borderRadius=v('borderRadius');
-  schema.theme.spacing=v('spacingSelect');
-  schema.theme.heroLayout=v('heroLayout');
+  schema.theme.fontFamily=customSelectValue('fontFamily');
+  schema.theme.borderRadius=customSelectValue('borderRadius');
+  schema.theme.spacing=customSelectValue('spacingSelect');
+  schema.theme.heroLayout=customSelectValue('heroLayout');
   schema.theme.darkMode=$id('darkMode').checked;
   schema.theme.aesthetic=v('uiStyle');
   schema.theme.gradientPreset=v('gradientPreset');
-  schema.theme.gradientType=v('gradientType');
-  schema.theme.gradientDir=v('gradientDir');
+  schema.theme.gradientType=customSelectValue('gradientType');
+  schema.theme.gradientDir=customSelectValue('gradientDir');
   // Step 6
   schema.theme.scrollEffect=v('scrollEffect');
   schema.theme.hoverEffect=v('hoverEffect');
@@ -976,10 +1183,11 @@ function collectSchema(){
   schema.contact.showMap=$id('showMap').checked;
   schema.contact.mapUrl=v('mapUrl');
   schema.contact.showAvailability=$id('showAvailability').checked;
-  schema.contact.status=v('availabilityStatus');
+  schema.contact.status=customSelectValue('availabilityStatus');
+  schema.footer.about=v('footerAbout');
   // Availability badge
   var statusLabels={'available':'✅ Available for new projects','busy':'🔴 Currently busy','parttime':'🟡 Available part-time','remote':'🌍 Open to remote only'};
-  schema.availabilityBadge=schema.contact.showAvailability?statusLabels[schema.contact.status]||'':'';
+  schema.availabilityBadge=schema.contact.showAvailability?statusLabels[schema.contact.status]||schema.contact.status||'':'';
   // Step 7
   schema.siteURL=v('siteURL'); schema.seoKeywords=v('seoKeywords');
   syncSkillsToBlocks();

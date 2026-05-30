@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PortfolioGen — Advanced Builder · Cypher Labs</title>
+<link rel="icon" href="assets/img/svg/Cypher_Porfolio_Generator-no bg.svg" type="image/svg+xml">
 <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -79,6 +80,11 @@ img{max-width:100%;display:block}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
 .field-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.85rem}
 .hint{color:var(--muted);font-size:.77rem;margin-top:.3rem}
+.help-note{display:block;color:var(--muted);font-size:.72rem;line-height:1.45;margin-top:.28rem}
+.custom-select-input{display:none;margin-top:.45rem}
+.custom-select-input.active{display:block}
+.mini-note{display:flex;align-items:center;gap:.4rem;color:var(--muted);font-size:.76rem;line-height:1.5}
+.mini-note i{color:var(--primary);font-size:1rem}
 /* ====== BUTTONS ====== */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:40px;padding:0 .9rem;border:1.5px solid transparent;border-radius:var(--radius);font-weight:700;font-size:.86rem;transition:all .15s}
 .btn-primary{background:linear-gradient(135deg,var(--secondary),var(--primary));color:#fff;border-color:transparent;box-shadow:0 16px 32px rgba(24,185,143,.2)}
@@ -135,6 +141,14 @@ img{max-width:100%;display:block}
 .page-tab:hover:not(.active){border-color:var(--primary);color:var(--primary)}
 .page-panel{display:none}
 .page-panel.active{display:block}
+.page-tabs-head{width:100%;display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
+.page-tips{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem;margin:.8rem 0}
+.page-tip{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.65rem;color:var(--muted);font-size:.75rem}
+.page-tip strong{display:block;color:var(--text);font-size:.78rem;margin-bottom:.15rem}
+.page-settings{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:.85rem;margin-bottom:.85rem}
+.grid-preview-ruler{display:grid;grid-template-columns:repeat(12,1fr);gap:.2rem;margin:.65rem 0 .2rem}
+.grid-preview-ruler span{height:18px;border-radius:4px;background:rgba(12,155,112,.12);border:1px solid rgba(12,155,112,.18)}
+.col-range{width:110px;accent-color:var(--primary)}
 /* ====== BLOCK BUILDER ====== */
 .block-layout{display:grid;grid-template-columns:240px 1fr;gap:.85rem}
 .palette-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:.85rem;align-self:start}
@@ -170,6 +184,7 @@ img{max-width:100%;display:block}
 .style-preview{height:52px;border-radius:var(--radius);margin-bottom:.5rem;overflow:hidden;position:relative}
 .style-card strong{font-size:.82rem;display:block}
 .style-card span{color:var(--muted);font-size:.7rem}
+.style-card .learn-link{display:inline-flex;margin-top:.45rem;color:var(--primary);font-size:.7rem;font-weight:800}
 /* ====== EFFECTS TABS ====== */
 .effect-tabs{display:flex;gap:.35rem;margin-bottom:.85rem;border-bottom:1px solid var(--border);padding-bottom:.65rem;flex-wrap:wrap}
 .effect-tab{padding:.35rem .75rem;border-radius:var(--radius);border:1.5px solid transparent;font-size:.8rem;font-weight:700;color:var(--muted);transition:all .15s}
@@ -183,6 +198,21 @@ img{max-width:100%;display:block}
 .effect-card.selected{border-color:var(--primary);background:rgba(12,155,112,.06)}
 .effect-card strong{font-size:.78rem;display:block;margin-bottom:.15rem}
 .effect-card span{font-size:.68rem;color:var(--muted)}
+.effect-preview{height:42px;margin-bottom:.5rem;border-radius:var(--radius);background:linear-gradient(135deg,rgba(12,155,112,.16),rgba(59,130,246,.14));border:1px solid rgba(12,155,112,.18);position:relative;overflow:hidden}
+.effect-preview::before{content:"";position:absolute;width:20px;height:20px;left:11px;top:10px;border-radius:6px;background:var(--primary)}
+.effect-card:hover .effect-preview::before,.effect-card.previewing .effect-preview::before{animation:effectSlide .8s ease both}
+.effect-card[data-val="fadeIn"]:hover .effect-preview::before,.effect-card[data-val="fadeIn"].previewing .effect-preview::before{animation:effectFade .8s ease both}
+.effect-card[data-val="scale"]:hover .effect-preview::before,.effect-card[data-val="scale"].previewing .effect-preview::before{animation:effectScale .8s ease both}
+.effect-card[data-val="rotateIn"]:hover .effect-preview::before,.effect-card[data-val="rotateIn"].previewing .effect-preview::before{animation:effectRotate .8s ease both}
+.effect-card[data-val="flipIn"]:hover .effect-preview::before,.effect-card[data-val="flipIn"].previewing .effect-preview::before{animation:effectFlip .8s ease both}
+.effect-card[data-val="glow"] .effect-preview::before{box-shadow:0 0 18px var(--primary)}
+.effect-card[data-val="trail"] .effect-preview::after,.effect-card[data-val="ring"] .effect-preview::after{content:"";position:absolute;right:18px;top:12px;width:16px;height:16px;border-radius:50%;border:2px solid var(--primary)}
+.effect-info{margin-top:.45rem;padding:.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);font-size:.7rem;color:var(--muted);line-height:1.45}
+@keyframes effectSlide{from{transform:translateY(18px);opacity:.2}to{transform:translateX(64px);opacity:1}}
+@keyframes effectFade{from{opacity:0}to{opacity:1}}
+@keyframes effectScale{from{transform:scale(.45)}to{transform:scale(1.15)}}
+@keyframes effectRotate{from{transform:rotate(-90deg);opacity:.2}to{transform:rotate(0);opacity:1}}
+@keyframes effectFlip{from{transform:rotateY(90deg);opacity:.2}to{transform:rotateY(0);opacity:1}}
 /* ====== COLOR FIELDS ====== */
 .color-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem}
 .color-field label{display:block;font-size:.75rem;font-weight:700;color:var(--muted);margin-bottom:.3rem}
@@ -223,6 +253,11 @@ img{max-width:100%;display:block}
 .choice-card:hover:not(.selected){border-color:var(--muted2)}
 .choice-card strong{display:block;font-size:.84rem;margin-bottom:.15rem}
 .choice-card span{color:var(--muted);font-size:.73rem}
+.identity-jump{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.55rem;margin-bottom:1rem}
+.identity-jump .btn{justify-content:flex-start;background:var(--surface);border-color:var(--border);box-shadow:var(--shadow)}
+.identity-jump .btn.active{border-color:var(--primary);color:var(--primary);background:rgba(12,155,112,.06)}
+.identity-extra{display:none}
+.identity-extra.active{display:block}
 /* ====== JOB DATALIST ====== */
 datalist option{font-size:.85rem}
 /* ====== CONTACT CUSTOMIZER ====== */
@@ -232,6 +267,7 @@ datalist option{font-size:.85rem}
   .field-row,.field-row-3,.block-layout,.color-grid,.choice-grid,.style-grid,.effect-grid,.export-options{grid-template-columns:1fr}
   .wizard-col{padding:.85rem .75rem 5.5rem}
   .gradient-grid{grid-template-columns:repeat(4,1fr)}
+  .page-tips,.identity-jump{grid-template-columns:1fr}
 }
 @media(max-width:500px){
   .gradient-grid{grid-template-columns:repeat(3,1fr)}
@@ -491,6 +527,12 @@ datalist option{font-size:.85rem}
       <div id="ghUsernameField" style="display:none;margin-top:.65rem">
         <div class="field"><label>GitHub Username</label><input type="text" id="ghUsername" placeholder="yourusername"></div>
       </div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Footer</p>
+      <p class="hint" style="margin-bottom:.85rem">Your name, enabled page links, and PortfolioGen credit are always included. Add one optional sentence if you want more context.</p>
+      <div class="field"><label for="footerAbout">Optional footer about text</label><textarea id="footerAbout" rows="2" placeholder="A short note about your work, availability, or values."></textarea></div>
     </div>
   </div>
 

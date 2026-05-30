@@ -175,8 +175,9 @@ function buildNav(s,active){
     if(soc.inNav&&soc.url){navSocials+='<a href="'+attr(soc.url)+'" target="_blank" class="nav-social-link" aria-label="'+esc(soc.name)+'"><i class="bx '+esc(soc.icon)+'"></i></a>';}
   });
   var links=pages.filter(function(p){return p.enabled;}).map(function(p){
-    var href=p.name+'.html';var label=p.navLabel||p.label;
-    return'<li><a href="'+attr(href)+'" class="nav-link'+(active===p.name?' active':'')+'">' +esc(label)+'</a></li>';
+    var href=s.__preview?'#pg-page-'+p.name:p.name+'.html';var label=p.navLabel||p.label;
+    var previewAttr=s.__preview?' data-preview-page="'+attr(p.name)+'"':'';
+    return'<li><a href="'+attr(href)+'"'+previewAttr+' class="nav-link'+(active===p.name?' active':'')+'">' +esc(label)+'</a></li>';
   }).join('');
   if(m.resumeUrl)links+='<li><a href="'+attr(m.resumeUrl)+'" target="_blank" class="nav-link nav-resume">Resume</a></li>';
   return'<header class="site-header"><nav class="site-nav">'+
@@ -189,15 +190,30 @@ function buildNav(s,active){
 
 /* ===== FOOTER BUILDER ===== */
 function buildFooter(s){
-  var m=s.meta||{};var icons='';
+  var m=s.meta||{};var icons='';var pages=s.pages||[];var footer=s.footer||{};
   (s.socials||[]).forEach(function(soc){
     if(soc.inFooter&&soc.url){icons+='<a href="'+attr(soc.url)+'" target="_blank" class="footer-social" aria-label="'+esc(soc.name)+'"><i class="bx '+esc(soc.icon)+'"></i></a>';}
   });
+  var pageLinks=pages.filter(function(p){return p.enabled;}).map(function(p){
+    var href=s.__preview?'#pg-page-'+p.name:p.name+'.html';
+    var previewAttr=s.__preview?' data-preview-page="'+attr(p.name)+'"':'';
+    return'<a href="'+attr(href)+'"'+previewAttr+'>'+esc(p.navLabel||p.label||p.name)+'</a>';
+  }).join('');
   return'<footer class="site-footer"><div class="footer-inner">'+
-    '<span class="footer-copy">&copy; '+yr()+' '+esc(m.name||'Portfolio')+'</span>'+
+    '<div class="footer-brand"><strong>'+esc(m.name||'Portfolio')+'</strong>'+(footer.about?'<p>'+esc(footer.about)+'</p>':'')+'</div>'+
+    '<nav class="footer-links" aria-label="Important pages">'+pageLinks+'</nav>'+
     '<div class="footer-socials">'+icons+'</div>'+
-    '<span class="footer-credit">Made with <a href="https://github.com" target="_blank">PortfolioGen</a></span>'+
+    '<span class="footer-copy">&copy; '+yr()+' '+esc(m.name||'Portfolio')+'</span>'+
+    '<span class="footer-credit">Made with <a href="https://portfoliogen-one.vercel.app/" target="_blank" rel="noopener">PortfolioGen</a></span>'+
     '</div></footer>';
+}
+
+function buildFloatingInstructions(){
+  return'<aside class="pg-instructions" id="pgInstructions" aria-label="Portfolio instructions">'+
+    '<button type="button" class="pg-instructions-close" id="pgInstructionsClose" aria-label="Hide instructions"><i class="bx bx-x"></i></button>'+
+    '<strong>Instructions</strong>'+
+    '<p>Use the page links to move around this portfolio. Use the theme button if available, open project links in new tabs, and use the contact section to reach out.</p>'+
+  '</aside>';
 }
 
 /* ===== BLOCK RENDERERS ===== */
@@ -638,13 +654,18 @@ function buildCSS(s){
     +'.gallery-img:hover{transform:scale(1.05)}\n'
     +'.gallery-ph{display:grid;place-items:center;gap:.5rem;border:2px dashed var(--border);border-radius:var(--radius);padding:2rem;color:var(--muted);text-align:center}\n'
     // FOOTER
-    +'.site-footer{background:linear-gradient(135deg,var(--secondary),#0b1a30);color:#fff;padding:1.5rem 1rem;margin-top:1rem}\n'
-    +'.footer-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}\n'
+    +'.site-footer{background:linear-gradient(135deg,var(--secondary),#0b1a30);color:#fff;padding:1.75rem 1rem;margin-top:1rem}\n'
+    +'.footer-inner{max-width:1140px;margin:0 auto;display:grid;grid-template-columns:1.2fr auto auto;align-items:center;gap:1rem}\n'
+    +'.footer-brand strong{display:block;font-size:1rem;margin-bottom:.2rem}.footer-brand p{max-width:420px;color:rgba(255,255,255,.62);font-size:.82rem;line-height:1.55}\n'
+    +'.footer-links{display:flex;flex-wrap:wrap;gap:.65rem 1rem;align-items:center}.footer-links a{font-size:.82rem;font-weight:700;color:rgba(255,255,255,.72)}.footer-links a:hover{color:var(--accent)}\n'
     +'.footer-copy,.footer-credit{font-size:.8rem;color:rgba(255,255,255,.55)}\n'
-    +'.footer-credit a{color:var(--accent)}\n'
+    +'.footer-credit a{color:var(--accent);font-weight:800}\n'
     +'.footer-socials{display:flex;gap:.45rem}\n'
     +'.footer-social{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);display:grid;place-items:center;color:#fff;font-size:1.1rem;transition:all .15s}\n'
     +'.footer-social:hover{background:var(--primary)}\n'
+    +'.pg-instructions{position:fixed;right:1rem;bottom:1rem;z-index:120;width:min(300px,calc(100vw - 2rem));padding:1rem 1rem 1rem 1.1rem;background:rgba(255,255,255,.95);color:var(--text);border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:var(--radius);box-shadow:0 18px 50px rgba(15,23,42,.16);backdrop-filter:blur(12px)}\n'
+    +'body.dark .pg-instructions{background:rgba(30,41,59,.95)}.pg-instructions strong{display:block;margin-bottom:.3rem;color:var(--primary)}.pg-instructions p{font-size:.82rem;color:var(--muted);line-height:1.55}.pg-instructions-close{position:absolute;right:.45rem;top:.45rem;width:28px;height:28px;border:0;background:transparent;color:var(--muted);font-size:1.1rem;cursor:pointer;border-radius:50%}.pg-instructions-close:hover{background:var(--border);color:var(--text)}\n'
+    +'@media(max-width:768px){.footer-inner{grid-template-columns:1fr}.footer-links{justify-content:flex-start}.pg-instructions{left:1rem;right:1rem;width:auto}}\n'
     +pageTransCSS+effectsCSS+cursorCSS+gradientCSS;
 }
 
@@ -794,6 +815,10 @@ function buildMainJS(s,allBlocks){
   out+='const revealObs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add("revealed");revealObs.unobserve(e.target);}}),{threshold:.08});document.querySelectorAll("[data-reveal]").forEach(el=>revealObs.observe(el));\n';
   // Contact form
   out+='function handleContact(e){e.preventDefault();const m=document.getElementById("contactMsg");if(m){m.style.display="block";}}\n';
+  // Floating instructions
+  out+='const pgInst=document.getElementById("pgInstructions"),pgInstClose=document.getElementById("pgInstructionsClose");if(pgInst&&localStorage.getItem("pgInstructionsHidden")==="1")pgInst.remove();if(pgInstClose)pgInstClose.addEventListener("click",()=>{localStorage.setItem("pgInstructionsHidden","1");pgInst&&pgInst.remove();});\n';
+  // Blob preview multi-page navigation
+  out+='if(window.__PG_PREVIEW_PAGES){const renderPreviewPage=name=>{const html=window.__PG_PREVIEW_PAGES[name];const grid=document.querySelector("main.page-grid");if(!html||!grid)return;grid.innerHTML=html;document.querySelectorAll("[data-preview-page]").forEach(a=>a.classList.toggle("active",a.getAttribute("data-preview-page")===name));document.title=(name.charAt(0).toUpperCase()+name.slice(1))+" - "+(window.__PG_PREVIEW_NAME||"Portfolio");document.querySelectorAll("[data-reveal]").forEach(el=>{el.classList.add("revealed");try{revealObs.observe(el)}catch(e){}});scrollTo({top:0,behavior:"smooth"});};document.addEventListener("click",e=>{const a=e.target.closest("[data-preview-page]");if(!a)return;e.preventDefault();renderPreviewPage(a.getAttribute("data-preview-page"));});}\n';
   // Hover 3D tilt
   if(t.hoverEffect==='tilt3d'){
     out+='document.querySelectorAll(".bento-block").forEach(c=>{c.addEventListener("mousemove",e=>{const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.style.transform=`perspective(800px) rotateX(${-y*6}deg) rotateY(${x*6}deg) translateY(-4px)`;});c.addEventListener("mouseleave",()=>c.style.transform="");});\n';
@@ -841,7 +866,7 @@ function buildMainJS(s,allBlocks){
   }
   // Page transitions
   if(t.pageTransitions){
-    out+='document.body.classList.add("pg-ready");document.addEventListener("click",e=>{const a=e.target.closest("a");if(!a||a.target||!a.href.endsWith(".html"))return;e.preventDefault();document.body.classList.add("pg-exit");setTimeout(()=>location.href=a.href,280);});\n';
+    out+='requestAnimationFrame(()=>document.body.classList.add("pg-ready"));document.addEventListener("click",e=>{const a=e.target.closest("a");if(!a||a.target||a.hasAttribute("download")||a.dataset.previewPage||!a.href)return;let u;try{u=new URL(a.href,location.href)}catch(err){return}if(u.origin!==location.origin||!u.pathname.endsWith(".html"))return;e.preventDefault();document.body.classList.add("pg-exit");setTimeout(()=>location.href=u.href,260);});\n';
   }
   return out;
 }
@@ -866,18 +891,38 @@ function buildHead(s,pageName,preview){
     '</head><body>';
 }
 
-/* ===== COMPILE PAGE ===== */
-function compilePage(page,s,preview){
-  s.__preview=!!preview;
+function compilePageCells(page,s,preview){
   var sorted=(page.blocks||[]).filter(function(b){return !b.disabled;}).slice().sort(function(a,b){return(a.order||0)-(b.order||0);});
   var cells=sorted.map(function(b){
     return'<div class="bento-cell" style="grid-column:span '+(b.cols||12)+'">'+compileBlock(b,s,preview)+'</div>';
   }).join('\n');
+  return cells;
+}
+
+function buildPreviewPageScript(s){
+  var map={};
+  (s.pages||[]).filter(function(p){return p.enabled;}).forEach(function(p){
+    map[p.name]=compilePageCells(p,s,true);
+  });
+  var json=JSON.stringify(map).replace(/<\//g,'<\\/');
+  var name=JSON.stringify((s.meta&&s.meta.name)||'Portfolio').replace(/<\//g,'<\\/');
+  return'<script>window.__PG_PREVIEW_PAGES='+json+';window.__PG_PREVIEW_NAME='+name+';<\/script>';
+}
+
+/* ===== COMPILE PAGE ===== */
+function compilePage(page,s,preview){
+  s.__preview=!!preview;
+  var cells=compilePageCells(page,s,preview);
+  var allPreviewBlocks=[];
+  if(preview){
+    (s.pages||[]).forEach(function(p){ (p.blocks||[]).forEach(function(b){ allPreviewBlocks.push(b); }); });
+  }
   var out=buildHead(s,page.name,preview)+
     buildNav(s,page.name)+
     '<main class="page-grid">'+cells+'</main>'+
     buildFooter(s)+
-    (preview?'<script>\n'+buildMainJS(s,page.blocks)+'\n<\/script>':'<script src="assets/js/main.js"><\/script>')+
+    buildFloatingInstructions()+
+    (preview?buildPreviewPageScript(s)+'<script>\n'+buildMainJS(s,allPreviewBlocks)+'\n<\/script>':'<script src="assets/js/main.js"><\/script>')+
     '</body></html>';
   delete s.__preview;return out;
 }
@@ -974,7 +1019,7 @@ function build404(s){
     '<h1 style="font-size:2rem;margin:.5rem 0">Page Not Found</h1>'+
     '<p style="color:var(--muted);margin-bottom:1.5rem">The page you\'re looking for doesn\'t exist.</p>'+
     '<a href="index.html" class="btn btn-primary">Go Home</a></div></main>'+
-    buildFooter(s)+'<script src="assets/js/main.js"><\/script></body></html>';
+    buildFooter(s)+buildFloatingInstructions()+'<script src="assets/js/main.js"><\/script></body></html>';
   return out;
 }
 
