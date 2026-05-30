@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProfileGen - Portfolio Generator by Cypher Labs</title>
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        :root {
+            --primary: #0C9B70;
+            --primary-dim: #087654;
+            --accent: #1db88e;
+            --bg: #eef3f7;
+            --surface: #ffffff;
+            --surface2: #f8fafc;
+            --border: #dbe5ef;
+            --text: #172033;
+            --muted: #65748a;
+            --danger: #dc2626;
+            --radius: 8px;
+        }
+        *, ::before, ::after { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; font-family: Inter, "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); }
+        a { color: inherit; text-decoration: none; }
+        button, input, textarea, select { font: inherit; }
+        button { cursor: pointer; }
+        .gen-header { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 1.25rem; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
+        .gen-logo { display: flex; align-items: center; gap: .6rem; font-weight: 850; color: var(--primary); }
+        .gen-logo img { width: 32px; height: 32px; object-fit: contain; }
+        .gen-badge { padding: .2rem .55rem; background: var(--primary); color: #fff; border-radius: 999px; font-size: .72rem; font-weight: 800; }
+        .progress-wrap { background: var(--surface); border-bottom: 1px solid var(--border); padding: .85rem 1rem; }
+        .progress-inner { max-width: 820px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: .35rem; }
+        .prog-step { display: grid; justify-items: center; gap: .25rem; color: var(--muted); font-size: .72rem; font-weight: 800; }
+        .prog-dot { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border); }
+        .prog-step.active .prog-dot, .prog-step.done .prog-dot { color: #fff; background: var(--primary); border-color: var(--primary); }
+        .prog-step.active { color: var(--primary); }
+        .generator-shell { display: block; }
+        .wizard-wrap { width: min(900px, calc(100% - 28px)); margin: 1.5rem auto 6rem; }
+        .step { display: none; }
+        .step.active { display: block; }
+        .step-header { margin-bottom: 1rem; }
+        .step-header h2 { margin: 0 0 .25rem; font-size: 1.45rem; }
+        .step-header p, .hint, .muted { margin: 0; color: var(--muted); font-size: .86rem; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-bottom: 1rem; box-shadow: 0 8px 24px rgba(15, 23, 42, .04); }
+        .card-title { margin: 0 0 .9rem; color: var(--muted); font-size: .78rem; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+        .field { margin-bottom: 1rem; }
+        .field:last-child { margin-bottom: 0; }
+        .field label { display: block; margin-bottom: .32rem; font-size: .84rem; font-weight: 800; }
+        .req { color: var(--primary); }
+        .field input, .field textarea, .field select {
+            width: 100%; min-height: 44px; padding: .7rem .82rem; color: var(--text); background: var(--surface2);
+            border: 1.5px solid var(--border); border-radius: var(--radius); outline: none;
+        }
+        .field textarea { min-height: 92px; resize: vertical; }
+        .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(12,155,112,.12); }
+        .field-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+        .button-row { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+        .btn, .btn-nav, .btn-download {
+            display: inline-flex; align-items: center; justify-content: center; gap: .42rem; min-height: 42px; padding: 0 .95rem;
+            border: 1px solid transparent; border-radius: var(--radius); font-weight: 850;
+        }
+        .btn-primary, .btn-nav--next, .btn-download { color: #fff; background: var(--primary); border-color: var(--primary); }
+        .btn-secondary, .btn-nav--back { color: var(--text); background: var(--surface2); border-color: var(--border); }
+        .btn-danger { color: #fff; background: var(--danger); border-color: var(--danger); }
+        .btn-icon { width: 34px; height: 34px; padding: 0; }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem 0; border-bottom: 1px solid var(--border); }
+        .toggle-row:last-child { border-bottom: 0; }
+        .toggle-label { display: grid; gap: .1rem; }
+        .toggle-label strong { font-size: .9rem; }
+        .toggle-label span { color: var(--muted); font-size: .78rem; }
+        .toggle { position: relative; width: 46px; height: 26px; flex: 0 0 auto; }
+        .toggle input { position: absolute; opacity: 0; }
+        .toggle-slider { position: absolute; inset: 0; border-radius: 999px; background: var(--border); }
+        .toggle-slider::before { content: ""; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; border-radius: 50%; background: #fff; transition: transform .18s; }
+        .toggle input:checked + .toggle-slider { background: var(--primary); }
+        .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+        .upload-zone { min-height: 112px; display: grid; place-items: center; gap: .4rem; text-align: center; padding: 1rem; color: var(--muted); background: var(--surface2); border: 2px dashed var(--border); border-radius: var(--radius); }
+        .upload-zone:hover, .upload-zone.dragging { border-color: var(--primary); color: var(--primary); }
+        .upload-zone i { font-size: 1.6rem; }
+        .upload-zone input { display: none; }
+        .upload-error { min-height: 18px; color: var(--danger); font-size: .78rem; margin-top: .4rem; }
+        .image-preview { display: flex; align-items: center; gap: .75rem; margin-top: .75rem; }
+        .image-preview img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
+        .favicon-preview img { border-radius: var(--radius); width: 44px; height: 44px; }
+        .section-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .75rem; }
+        .entry-list { display: grid; gap: .75rem; }
+        .entry-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: .85rem; }
+        .entry-card__head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .75rem; }
+        .entry-card__title { font-weight: 850; }
+        .drag-handle { color: var(--muted); cursor: grab; }
+        .block-builder { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 1rem; }
+        .palette-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; align-self: start; }
+        .palette-wrap h3, .canvas-wrap h3 { margin: 0 0 .75rem; color: var(--muted); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; }
+        .palette-item { width: 100%; display: flex; align-items: center; gap: .6rem; padding: .65rem; margin-bottom: .35rem; background: transparent; border: 1px solid transparent; border-radius: var(--radius); text-align: left; }
+        .palette-item:hover { background: rgba(12,155,112,.06); border-color: rgba(12,155,112,.24); }
+        .palette-icon { width: 32px; height: 32px; display: grid; place-items: center; color: var(--primary); background: rgba(12,155,112,.1); border-radius: var(--radius); font-weight: 900; font-size: .72rem; }
+        .palette-info { min-width: 0; flex: 1; }
+        .palette-name { display: block; font-size: .86rem; font-weight: 850; }
+        .palette-desc { display: block; color: var(--muted); font-size: .74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .canvas-wrap { display: grid; gap: .85rem; }
+        #blockCanvas { display: grid; gap: .55rem; min-height: 180px; padding: .75rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+        .canvas-empty { display: grid; place-items: center; text-align: center; color: var(--muted); padding: 2rem; }
+        .canvas-block { display: flex; align-items: center; gap: .55rem; padding: .65rem; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); }
+        .canvas-block__main { flex: 1; display: flex; align-items: center; gap: .45rem; min-width: 0; }
+        .canvas-block__name { font-size: .9rem; font-weight: 850; }
+        .canvas-block__controls { display: flex; align-items: center; gap: .35rem; }
+        .canvas-col-select { height: 34px; border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); }
+        .project-editor { display: none; }
+        .project-editor.visible { display: block; }
+        .project-image-preview img { width: 120px; height: 68px; border-radius: var(--radius); object-fit: cover; border: 1px solid var(--border); }
+        .bento-preview-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: .85rem; }
+        #bentoPreview { display: flex; flex-wrap: wrap; gap: .35rem; min-height: 34px; }
+        .preview-cell { padding: .28rem .5rem; color: var(--primary); background: rgba(12,155,112,.1); border: 1px solid rgba(12,155,112,.2); border-radius: var(--radius); font-size: .75rem; font-weight: 850; }
+        .color-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; }
+        .color-field label { display: block; margin-bottom: .32rem; color: var(--muted); font-weight: 800; font-size: .8rem; }
+        .color-field input { width: 100%; height: 44px; padding: .2rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface2); }
+        .choice-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; }
+        .choice-card { padding: .9rem; border: 2px solid var(--border); border-radius: var(--radius); background: var(--surface); text-align: left; }
+        .choice-card.selected { border-color: var(--primary); background: rgba(12,155,112,.06); }
+        .choice-card strong { display: block; margin-bottom: .2rem; }
+        .choice-card span { color: var(--muted); font-size: .76rem; }
+        .final-step { width: 100%; }
+        .final-toolbar, .preview-toolbar { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .75rem; }
+        .device-tabs { display: flex; gap: .35rem; padding: .25rem; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); }
+        .device-btn { min-height: 34px; padding: 0 .65rem; border: 0; border-radius: calc(var(--radius) - 2px); background: transparent; color: var(--muted); font-weight: 850; }
+        .device-btn.active { background: var(--primary); color: #fff; }
+        .preview-frame-shell { width: 100%; overflow: auto; background: #d9e2ec; border: 1px solid var(--border); border-radius: var(--radius); padding: .75rem; }
+        .preview-frame-shell iframe { display: block; width: 100%; min-height: 680px; margin: 0 auto; border: 0; background: #fff; border-radius: var(--radius); box-shadow: 0 12px 36px rgba(15,23,42,.12); }
+        .final-preview-shell iframe { height: calc(100vh - 180px); min-height: 520px; }
+        .preview-badge { display: none; color: var(--primary); font-size: .8rem; font-weight: 850; }
+        .preview-badge.visible { display: inline-flex; }
+        .quick-edit { display: none; gap: .65rem; margin-bottom: .75rem; }
+        .quick-edit.visible {
+            position: fixed; top: 142px; right: 1rem; z-index: 70; width: 300px; display: grid; grid-template-columns: 1fr;
+            padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            box-shadow: 0 18px 44px rgba(15,23,42,.18);
+        }
+        .preview-modal { position: fixed; inset: 0; z-index: 100; display: none; background: rgba(15,23,42,.78); padding: 1rem; }
+        .preview-modal.visible { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: .75rem; }
+        .preview-modal__bar { display: flex; justify-content: space-between; align-items: center; color: #fff; }
+        .preview-modal iframe { width: 100%; height: 100%; border: 0; background: #fff; border-radius: var(--radius); }
+        .floating-preview { position: fixed; right: 1rem; bottom: 5rem; z-index: 60; display: none; box-shadow: 0 12px 28px rgba(12,155,112,.28); }
+        .wizard-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .85rem 1.25rem; background: var(--surface); border-top: 1px solid var(--border); }
+        .toast { position: fixed; right: 1rem; bottom: 1rem; z-index: 120; display: none; padding: .75rem .9rem; color: #fff; background: #172033; border-left: 4px solid var(--primary); border-radius: var(--radius); box-shadow: 0 12px 32px rgba(15,23,42,.2); }
+        .toast.visible { display: block; }
+        @media (min-width: 1100px) {
+            .generator-shell.has-preview { display: grid; grid-template-columns: 420px minmax(0, 1fr); height: calc(100vh - 129px); overflow: hidden; }
+            .generator-shell.has-preview .wizard-wrap { width: 100%; margin: 0; padding: 1rem; overflow: auto; }
+            .live-preview { display: block; overflow: hidden; border-left: 1px solid var(--border); background: #d9e2ec; padding: 1rem; }
+            .live-preview iframe { min-height: calc(100vh - 218px); }
+        }
+        @media (max-width: 1099px) {
+            .live-preview { display: none; }
+            .floating-preview { display: inline-flex; }
+        }
+        @media (max-width: 760px) {
+            .field-row, .block-builder, .color-row, .choice-grid, .quick-edit { grid-template-columns: 1fr; }
+            .quick-edit.visible { left: 1rem; right: 1rem; top: 88px; width: auto; }
+            .progress-inner { justify-content: center; flex-wrap: wrap; }
+            .prog-label { display: none; }
+            .final-toolbar, .preview-toolbar { align-items: flex-start; flex-direction: column; }
+            .wizard-wrap { width: min(100% - 20px, 900px); }
+        }
+    </style>
+</head>
+<body>
+    <header class="gen-header">
+        <a href="index.html" class="gen-logo">
+            <img src="assets/img/svg/Cypher_Porfolio_Generator-no bg.svg" alt="ProfileGen" onerror="this.style.display='none'">
+            <span>ProfileGen</span>
+        </a>
+        <span class="gen-badge">v3 local</span>
+    </header>
+
+    <div class="progress-wrap">
+        <div class="progress-inner">
+            <div class="prog-step" data-step="1"><div class="prog-dot">1</div><span class="prog-label">Info</span></div>
+            <div class="prog-step" data-step="2"><div class="prog-dot">2</div><span class="prog-label">Blocks</span></div>
+            <div class="prog-step" data-step="3"><div class="prog-dot">3</div><span class="prog-label">Socials</span></div>
+            <div class="prog-step" data-step="4"><div class="prog-dot">4</div><span class="prog-label">Design</span></div>
+            <div class="prog-step" data-step="5"><div class="prog-dot">5</div><span class="prog-label">Motion</span></div>
+            <div class="prog-step" data-step="6"><div class="prog-dot"><i class="bx bx-check"></i></div><span class="prog-label">Preview</span></div>
+        </div>
+    </div>
+
+    <div class="generator-shell" id="generatorShell">
+        <div class="wizard-wrap">
+            <div class="step" data-step="1">
+                <div class="step-header">
+                    <h2>Personal Information</h2>
+                    <p>This data is embedded directly into your downloaded portfolio.</p>
+                </div>
+                <div class="card">
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="fullName">Full Name <span class="req">*</span></label>
+                            <input type="text" id="fullName" placeholder="Jane Smith">
+                        </div>
+                        <div class="field">
+                            <label for="profTitle">Professional Title <span class="req">*</span></label>
+                            <input type="text" id="profTitle" placeholder="Full Stack Developer">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Profile Photo</label>
+                        <label class="upload-zone" id="photoDrop">
+                            <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp">
+                            <i class="bx bx-cloud-upload"></i>
+                            <span>Drop a JPG, PNG, or WebP here, or click to browse. Max 3MB.</span>
+                        </label>
+                        <div id="photoError" class="upload-error"></div>
+                        <div id="photoPreview" class="image-preview"></div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" placeholder="jane@example.com">
+                        </div>
+                        <div class="field">
+                            <label for="resumeUrl">Resume PDF URL</label>
+                            <input type="text" id="resumeUrl" placeholder="https://drive.google.com/...">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="tagline">Tagline <span class="req">*</span></label>
+                        <input type="text" id="tagline" placeholder="I build clean, fast web experiences.">
+                    </div>
+                    <div class="field">
+                        <label for="bio">Bio <span class="req">*</span></label>
+                        <textarea id="bio" placeholder="Write a short paragraph about your background, work, and approach."></textarea>
+                    </div>
+                    <div class="field">
+                        <label>Favicon</label>
+                        <label class="upload-zone" id="faviconDrop">
+                            <input type="file" id="faviconInput" accept=".ico,image/png,image/svg+xml">
+                            <i class="bx bx-star"></i>
+                            <span>Upload ICO, PNG, or SVG. Max 512KB. A default initial icon is generated if skipped.</span>
+                        </label>
+                        <div id="faviconError" class="upload-error"></div>
+                        <div id="faviconPreview" class="image-preview favicon-preview"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-head">
+                        <div>
+                            <p class="card-title">Education</p>
+                            <p class="hint">Add degrees, courses, or certifications. Drag controls reorder entries.</p>
+                        </div>
+                        <button type="button" class="btn btn-primary" id="addEducationBtn"><i class="bx bx-plus"></i> Add Education</button>
+                    </div>
+                    <div id="educationList" class="entry-list"></div>
+                </div>
+            </div>
+
+            <div class="step" data-step="2">
+                <div class="step-header">
+                    <h2>Block Builder</h2>
+                    <p>Choose blocks, arrange them, and edit project content without touching files later.</p>
+                </div>
+                <div class="block-builder">
+                    <aside class="palette-wrap">
+                        <h3>Available Blocks</h3>
+                        <div id="blockPalette"></div>
+                    </aside>
+                    <div class="canvas-wrap">
+                        <div class="card">
+                            <h3>Your Layout</h3>
+                            <div id="blockCanvas"></div>
+                        </div>
+                        <div class="card project-editor" id="projectEditor">
+                            <div class="section-head">
+                                <div>
+                                    <p class="card-title">Project Editor</p>
+                                    <p class="hint">Appears when the Projects block exists in your layout.</p>
+                                </div>
+                                <button type="button" class="btn btn-primary" id="addProjectBtn"><i class="bx bx-plus"></i> Add Project</button>
+                            </div>
+                            <div id="projectList" class="entry-list"></div>
+                        </div>
+                        <div class="bento-preview-wrap">
+                            <h3>Layout Preview</h3>
+                            <div id="bentoPreview"></div>
+                        </div>
+                        <div class="card">
+                            <p class="card-title">Skills Block Data</p>
+                            <div class="field">
+                                <label for="skillsInput">Skills</label>
+                                <input type="text" id="skillsInput" placeholder="HTML/CSS:90, JavaScript:85, Python:80, Figma:70">
+                                <p class="hint">Comma-separated. Format: Name:Level.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step" data-step="3">
+                <div class="step-header">
+                    <h2>Social Links</h2>
+                    <p>Enter usernames for social platforms, or paste a full personal website URL.</p>
+                </div>
+                <div class="card">
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="github"><i class="bx bxl-github"></i> GitHub</label>
+                            <input type="text" id="github" placeholder="yourusername">
+                        </div>
+                        <div class="field">
+                            <label for="linkedin"><i class="bx bxl-linkedin"></i> LinkedIn</label>
+                            <input type="text" id="linkedin" placeholder="yourusername">
+                        </div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="twitter"><i class="bx bxl-twitter"></i> X / Twitter</label>
+                            <input type="text" id="twitter" placeholder="yourusername">
+                        </div>
+                        <div class="field">
+                            <label for="instagram"><i class="bx bxl-instagram"></i> Instagram</label>
+                            <input type="text" id="instagram" placeholder="yourusername">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="website"><i class="bx bx-globe"></i> Personal Website</label>
+                        <input type="text" id="website" placeholder="https://yoursite.com">
+                    </div>
+                </div>
+            </div>
+
+            <div class="step" data-step="4">
+                <div class="step-header">
+                    <h2>Design &amp; Theme</h2>
+                    <p>These controls compile into CSS variables in the ZIP.</p>
+                </div>
+                <div class="card">
+                    <p class="card-title">Colours</p>
+                    <div class="color-row">
+                        <div class="color-field"><label for="primaryColor">Primary</label><input type="color" id="primaryColor" value="#0C9B70"></div>
+                        <div class="color-field"><label for="secondaryColor">Secondary</label><input type="color" id="secondaryColor" value="#042444"></div>
+                        <div class="color-field"><label for="accentColor">Accent</label><input type="color" id="accentColor" value="#1db88e"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <p class="card-title">Typography &amp; Spacing</p>
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="fontFamily">Font Family</label>
+                            <select id="fontFamily">
+                                <option value="Inter">Inter</option>
+                                <option value="DM Sans">DM Sans</option>
+                                <option value="Sora">Sora</option>
+                                <option value="Outfit">Outfit</option>
+                                <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+                                <option value="Manrope">Manrope</option>
+                                <option value="Space Grotesk">Space Grotesk</option>
+                                <option value="IBM Plex Sans">IBM Plex Sans</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="borderRadius">Border Radius</label>
+                            <select id="borderRadius">
+                                <option value="0">None - Sharp</option>
+                                <option value="0.375rem">Small</option>
+                                <option value="0.75rem" selected>Medium</option>
+                                <option value="1.25rem">Large</option>
+                                <option value="9999px">Pill</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="spacingSelect">Block Spacing</label>
+                        <select id="spacingSelect">
+                            <option value="compact">Compact</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="relaxed">Relaxed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card">
+                    <p class="card-title">Aesthetic Preset</p>
+                    <div class="choice-grid">
+                        <button type="button" class="choice-card aesthetic-card selected" data-value="clean"><strong>Clean</strong><span>Subtle shadows, crisp cards</span></button>
+                        <button type="button" class="choice-card aesthetic-card" data-value="glassmorphism"><strong>Glass</strong><span>Frosted panels</span></button>
+                        <button type="button" class="choice-card aesthetic-card" data-value="brutalism"><strong>Brutal</strong><span>Hard borders, bold shadow</span></button>
+                    </div>
+                    <input type="hidden" id="aesthetic" value="clean">
+                </div>
+                <div class="card">
+                    <p class="card-title">Appearance</p>
+                    <div class="toggle-row">
+                        <div class="toggle-label"><strong>Dark Mode Support</strong><span>Adds a theme toggle to the generated site.</span></div>
+                        <label class="toggle"><input type="checkbox" id="darkMode" checked><span class="toggle-slider"></span></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step" data-step="5">
+                <div class="step-header">
+                    <h2>Motion &amp; Live Integrations</h2>
+                    <p>Optional scripts are only added when enabled.</p>
+                </div>
+                <div class="card">
+                    <p class="card-title">Scroll Animations</p>
+                    <div class="toggle-row">
+                        <div class="toggle-label"><strong>Enable ScrollReveal</strong><span>Blocks animate in as the page scrolls.</span></div>
+                        <label class="toggle"><input type="checkbox" id="animEnabled" checked><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="field" style="margin-top:.75rem;">
+                        <label>Reveal Style</label>
+                        <div class="choice-grid">
+                            <button type="button" class="choice-card anim-card selected" data-value="slideUp"><strong>Slide Up</strong></button>
+                            <button type="button" class="choice-card anim-card" data-value="slideLeft"><strong>Slide Left</strong></button>
+                            <button type="button" class="choice-card anim-card" data-value="slideRight"><strong>Slide Right</strong></button>
+                            <button type="button" class="choice-card anim-card" data-value="fadeIn"><strong>Fade In</strong></button>
+                            <button type="button" class="choice-card anim-card" data-value="scale"><strong>Scale</strong></button>
+                        </div>
+                        <input type="hidden" id="animStyle" value="slideUp">
+                    </div>
+                </div>
+                <div class="card">
+                    <p class="card-title">Effects</p>
+                    <div class="field">
+                        <label for="hoverEffect">Hover Effect</label>
+                        <select id="hoverEffect">
+                            <option value="none">None</option>
+                            <option value="tilt">3D Tilt</option>
+                            <option value="parallax">Parallax depth</option>
+                        </select>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-label"><strong>Page Transitions</strong><span>Fade between internal generated pages.</span></div>
+                        <label class="toggle"><input type="checkbox" id="pageTransitions"><span class="toggle-slider"></span></label>
+                    </div>
+                </div>
+                <div class="card">
+                    <p class="card-title">Live Integrations</p>
+                    <div class="toggle-row">
+                        <div class="toggle-label"><strong>GitHub Feed</strong><span>Shows recent public GitHub events.</span></div>
+                        <label class="toggle"><input type="checkbox" id="intGithub"><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="field" id="githubIntegrationField" style="display:none;margin-top:.75rem;">
+                        <label for="ghUsername">GitHub Username</label>
+                        <input type="text" id="ghUsername" placeholder="yourusername">
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-label"><strong>Spotify Widget</strong><span>Adds a placeholder widget.</span></div>
+                        <label class="toggle"><input type="checkbox" id="intSpotify"><span class="toggle-slider"></span></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step final-step" data-step="6">
+                <div class="final-toolbar">
+                    <div>
+                        <h2 style="margin:0;">Final Preview</h2>
+                        <p class="hint">Review, inline-edit text, add SEO URL, then download.</p>
+                    </div>
+                    <div class="button-row">
+                        <div class="device-tabs" data-target="final">
+                            <button type="button" class="device-btn active" data-width="full">Desktop</button>
+                            <button type="button" class="device-btn" data-width="768">Tablet</button>
+                            <button type="button" class="device-btn" data-width="375">Mobile</button>
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="editModeBtn"><i class="bx bx-edit"></i> Edit</button>
+                        <button type="button" class="btn-download" id="btnDownload"><i class="bx bx-download"></i> Download ZIP</button>
+                    </div>
+                </div>
+                <div class="quick-edit" id="quickEdit">
+                    <div class="field"><label for="quickPrimary">Primary</label><input type="color" id="quickPrimary" value="#0C9B70"></div>
+                    <div class="field"><label for="quickSecondary">Secondary</label><input type="color" id="quickSecondary" value="#042444"></div>
+                    <div class="field"><label for="quickAccent">Accent</label><input type="color" id="quickAccent" value="#1db88e"></div>
+                    <div class="field"><label for="quickFont">Font</label><select id="quickFont"><option value="Inter">Inter</option><option value="DM Sans">DM Sans</option><option value="Sora">Sora</option><option value="Outfit">Outfit</option><option value="Manrope">Manrope</option><option value="Space Grotesk">Space Grotesk</option></select></div>
+                </div>
+                <div class="card">
+                    <div class="field">
+                        <label for="siteURL">Your site URL (for SEO)</label>
+                        <input type="text" id="siteURL" placeholder="https://yourname.github.io">
+                        <p class="hint">Used only to generate sitemap.xml and robots.txt.</p>
+                    </div>
+                </div>
+                <div class="preview-frame-shell final-preview-shell" id="finalPreviewShell">
+                    <iframe id="finalPreviewFrame" title="Final portfolio preview"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <aside class="live-preview" id="livePreview">
+            <div class="preview-toolbar">
+                <div>
+                    <strong>Live Preview</strong>
+                    <span class="preview-badge" id="previewBadge">Updating...</span>
+                </div>
+                <div class="device-tabs" data-target="live">
+                    <button type="button" class="device-btn active" data-width="full">Desktop</button>
+                    <button type="button" class="device-btn" data-width="768">Tablet</button>
+                    <button type="button" class="device-btn" data-width="375">Mobile</button>
+                </div>
+            </div>
+            <div class="preview-frame-shell" id="livePreviewShell">
+                <iframe id="livePreviewFrame" title="Live portfolio preview"></iframe>
+            </div>
+        </aside>
+    </div>
+
+    <button type="button" class="btn btn-primary floating-preview" id="openPreviewBtn"><i class="bx bx-show"></i> Preview</button>
+    <div class="preview-modal" id="previewModal" aria-hidden="true">
+        <div class="preview-modal__bar">
+            <strong>Preview</strong>
+            <button type="button" class="btn btn-secondary" id="closePreviewBtn"><i class="bx bx-x"></i> Close</button>
+        </div>
+        <iframe id="modalPreviewFrame" title="Mobile preview modal"></iframe>
+    </div>
+    <div class="toast" id="saveToast">Changes saved</div>
+
+    <div class="wizard-nav">
+        <button type="button" class="btn-nav btn-nav--back" id="btnBack" style="display:none;"><i class="bx bx-chevron-left"></i> Back</button>
+        <span></span>
+        <button type="button" class="btn-nav btn-nav--next" id="btnNext">Next <i class="bx bx-chevron-right"></i></button>
+    </div>
+
+    <script src="assets/js/builder.js"></script>
+    <script src="assets/js/wizard.js"></script>
+</body>
+</html>

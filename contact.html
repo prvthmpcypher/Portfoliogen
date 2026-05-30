@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact - PortfolioGen by Cypher Labs</title>
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="icon" href="assets/img/svg/Cypher_Porfolio_Generator-no bg.svg">
+</head>
+<body>
+    <header class="l-header">
+        <nav class="nav bd-grid" aria-label="Primary navigation">
+            <a href="index.html" class="nav__brand"><span class="nav__brand-mark"><img src="assets/img/svg/Cypher_Porfolio_Generator-no bg.svg" alt=""></span><span class="nav__brand-text"><strong>PortfolioGen</strong><span>by Cypher Labs</span></span></a>
+            <div class="nav__menu" id="nav-menu"><ul class="nav__list"><li><a href="index.html" class="nav__link">Home</a></li><li><a href="templates.html" class="nav__link">Templates</a></li><li><a href="about.html" class="nav__link">About</a></li><li><a href="work.html" class="nav__link">Docs</a></li><li><a href="contact.html" class="nav__link active-link">Contact</a></li></ul></div>
+            <div class="nav__actions"><div class="nav__socials"><a href="https://github.com/prvthmpcypher" target="_blank" rel="noopener" class="icon-btn" aria-label="GitHub"><i class="bx bxl-github"></i></a><a href="https://www.linkedin.com/in/prvthmp" target="_blank" rel="noopener" class="icon-btn" aria-label="LinkedIn"><i class="bx bxl-linkedin"></i></a><a href="https://x.com/prvthmp" target="_blank" rel="noopener" class="icon-btn" aria-label="X"><i class="bx bxl-twitter"></i></a><a href="https://www.instagram.com/prvthmp" target="_blank" rel="noopener" class="icon-btn" aria-label="Instagram"><i class="bx bxl-instagram"></i></a></div><button class="change-theme bx bx-moon" id="theme-button" type="button" aria-label="Toggle theme"></button><button class="nav__toggle" id="nav-toggle" type="button" aria-label="Open menu"><i class="bx bx-menu"></i></button></div>
+        </nav>
+    </header>
+
+    <main id="main-content">
+        <section class="page-hero">
+            <div class="page-hero__content">
+                <span class="eyebrow"><i class="bx bx-message-rounded-dots"></i> Contact and feedback</span>
+                <h1>Share feedback, request help, or connect with <span class="text-gradient">Cypher Labs.</span></h1>
+                <p>Use the review form for product feedback, or open the embedded profile links for GitHub, X, and LinkedIn.</p>
+            </div>
+            <div class="profile-embed-grid" aria-label="Profile links">
+                <a class="profile-embed" href="https://github.com/prvthmpcypher" target="_blank" rel="noopener"><i class="bx bxl-github"></i><span><strong>GitHub</strong><span>@prvthmpcypher</span></span></a>
+                <a class="profile-embed" href="https://x.com/prvthmp" target="_blank" rel="noopener"><i class="bx bxl-twitter"></i><span><strong>X</strong><span>@prvthmp</span></span></a>
+                <a class="profile-embed" href="https://www.linkedin.com/in/prvthmp" target="_blank" rel="noopener"><i class="bx bxl-linkedin"></i><span><strong>LinkedIn</strong><span>linkedin.com/in/prvthmp</span></span></a>
+            </div>
+        </section>
+
+        <section class="section contact" id="contact">
+            <h2 class="section-title">Feedback & Reviews</h2>
+            <p class="section-intro">Your message is handled locally in this demo form. Ratings now use familiar gold stars.</p>
+            <div class="contact-layout">
+                <form class="contact-panel contact__form review-form" aria-label="Feedback form">
+                    <div>
+                        <label class="contact__label" for="name">Your Name *</label>
+                        <input id="name" type="text" name="name" class="contact__input" placeholder="Alex Johnson" required>
+                    </div>
+                    <div>
+                        <label class="contact__label" for="email">Email *</label>
+                        <input id="email" type="email" name="email" class="contact__input" placeholder="alex@example.com" required>
+                    </div>
+                    <div>
+                        <label class="contact__label">Rating</label>
+                        <div class="rating-row">
+                            <input type="radio" id="rating-5" name="review-rating" value="5" checked><label for="rating-5" aria-label="5 stars"></label>
+                            <input type="radio" id="rating-4" name="review-rating" value="4"><label for="rating-4" aria-label="4 stars"></label>
+                            <input type="radio" id="rating-3" name="review-rating" value="3"><label for="rating-3" aria-label="3 stars"></label>
+                            <input type="radio" id="rating-2" name="review-rating" value="2"><label for="rating-2" aria-label="2 stars"></label>
+                            <input type="radio" id="rating-1" name="review-rating" value="1"><label for="rating-1" aria-label="1 star"></label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="contact__label" for="review">Your Review</label>
+                        <textarea id="review" name="review" class="contact__input" placeholder="Share your experience with PortfolioGen..."></textarea>
+                    </div>
+                    <button type="submit" class="button button--primary contact__button"><i class="bx bx-send"></i> Submit Review</button>
+                </form>
+
+                <aside class="contact-panel newsletter-panel">
+                    <span class="eyebrow"><i class="bx bx-envelope"></i> Newsletter</span>
+                    <h3>Subscribe to our newsletter</h3>
+                    <p>Get PortfolioGen updates, launch notes, and Cypher Labs product announcements.</p>
+                    <form class="contact__form" aria-label="Newsletter form">
+                        <input type="text" name="newsletter-name" class="contact__input" placeholder="Name" required>
+                        <input type="email" name="newsletter-email" class="contact__input" placeholder="Email" required>
+                        <button type="submit" class="button button--primary"><i class="bx bx-paper-plane"></i> Subscribe</button>
+                    </form>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer__container">
+            <div class="footer__section"><a class="footer__brand" href="index.html"><img src="assets/img/svg/Cypher_Porfolio_Generator-no bg.svg" alt=""><strong>PortfolioGen</strong></a><p>Privacy-first portfolio generation by Cypher Labs.</p><div class="footer__social"><a href="https://github.com/prvthmpcypher" target="_blank" rel="noopener" class="footer__icon" aria-label="GitHub"><i class="bx bxl-github"></i></a><a href="https://www.linkedin.com/in/prvthmp" target="_blank" rel="noopener" class="footer__icon" aria-label="LinkedIn"><i class="bx bxl-linkedin"></i></a><a href="https://x.com/prvthmp" target="_blank" rel="noopener" class="footer__icon" aria-label="X"><i class="bx bxl-twitter"></i></a><a href="https://www.instagram.com/prvthmp" target="_blank" rel="noopener" class="footer__icon" aria-label="Instagram"><i class="bx bxl-instagram"></i></a></div></div>
+            <div class="footer__section"><h3>Product</h3><ul><li><a href="templates.html">Templates</a></li><li><a href="generate.html">Generator</a></li><li><a href="index.html#pricing">Pricing</a></li></ul></div>
+            <div class="footer__section"><h3>Legal</h3><ul><li><a href="work.html#privacy">Privacy Policy</a></li><li><a href="work.html#terms">Terms of Service</a></li><li><a href="work.html#community">Community Guidelines</a></li><li><a href="work.html#cookies">Cookie Notice</a></li><li><a href="work.html#security">Security</a></li><li><a href="work.html#license">License</a></li></ul></div>
+            <div class="footer__section"><h3>Profiles</h3><ul><li><a href="https://github.com/prvthmpcypher" target="_blank" rel="noopener">GitHub</a></li><li><a href="https://www.linkedin.com/in/prvthmp" target="_blank" rel="noopener">LinkedIn</a></li><li><a href="https://x.com/prvthmp" target="_blank" rel="noopener">X / Twitter</a></li><li><a href="https://www.instagram.com/prvthmp" target="_blank" rel="noopener">Instagram</a></li></ul></div>
+        </div>
+        <div class="footer__bottom"><div class="footer__copy">&copy; 2026 PortfolioGen by Cypher Labs. All rights reserved.</div><div class="footer__credits">Made by <a href="https://github.com/prvthmpcypher" target="_blank" rel="noopener">Poorvith M P</a></div></div>
+    </footer>
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

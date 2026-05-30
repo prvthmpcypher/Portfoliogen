@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PortfolioGen by Cypher Labs</title>
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="icon" href="assets/img/svg/Cypher_Porfolio_Generator-no bg.svg">
+</head>
+<body>
+    <header class="l-header">
+        <nav class="nav bd-grid" aria-label="Primary navigation">
+            <a href="index.html" class="nav__brand" aria-label="PortfolioGen home">
+                <span class="nav__brand-mark"><img src="assets/img/svg/Cypher_Porfolio_Generator-no bg.svg" alt=""></span>
+                <span class="nav__brand-text"><strong>PortfolioGen</strong><span>by Cypher Labs</span></span>
+            </a>
+
+            <div class="nav__menu" id="nav-menu">
+                <ul class="nav__list">
+                    <li><a href="index.html" class="nav__link active-link">Home</a></li>
+                    <li><a href="templates.html" class="nav__link">Templates</a></li>
+                    <li><a href="about.html" class="nav__link">About</a></li>
+                    <li><a href="work.html" class="nav__link">Docs</a></li>
+                    <li><a href="contact.html" class="nav__link">Contact</a></li>
+                </ul>
+            </div>
+
+            <div class="nav__actions">
+                <div class="nav__socials" aria-label="Social profiles">
+                    <a href="https://github.com/prvthmpcypher" target="_blank" rel="noopener" class="icon-btn" aria-label="GitHub"><i class="bx bxl-github"></i></a>
+                    <a href="https://www.linkedin.com/in/prvthmp" target="_blank" rel="noopener" class="icon-btn" aria-label="LinkedIn"><i class="bx bxl-linkedin"></i></a>
+                    <a href="https://x.com/prvthmp" target="_blank" rel="noopener" class="icon-btn" aria-label="X"><i class="bx bxl-twitter"></i></a>
+                    <a href="https://www.instagram.com/prvthmp" target="_blank" rel="noopener" class="icon-btn" aria-label="Instagram"><i class="bx bxl-instagram"></i></a>
+                </div>
+                <button class="change-theme bx bx-moon" id="theme-button" type="button" aria-label="Toggle theme"></button>
+                <button class="nav__toggle" id="nav-toggle" type="button" aria-label="Open menu"><i class="bx bx-menu"></i></button>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content">
+        <section class="hero">
+            <div class="hero__content">
+                <span class="eyebrow"><i class="bx bx-shield-quarter"></i> Private portfolio builder</span>
+                <h1>Create a <span class="text-gradient">professional portfolio</span> without touching code.</h1>
+                <p>PortfolioGen turns your information into a clean, responsive, downloadable website. Choose your structure, add your socials, and ship a polished portfolio in minutes.</p>
+                <div class="hero__actions">
+                    <a href="generate.html" class="btn btn-primary"><i class="bx bx-play-circle"></i> Start Building</a>
+                    <a href="templates.html" class="btn btn-secondary"><i class="bx bx-layout"></i> View Templates</a>
+                </div>
+                <div class="stat-strip" aria-label="Product highlights">
+                    <div class="stat-panel"><strong>5 min</strong><span>Average build time</span></div>
+                    <div class="stat-panel"><strong>100%</strong><span>Local and private</span></div>
+                    <div class="stat-panel"><strong>ZIP</strong><span>Ready to deploy</span></div>
+                </div>
+            </div>
+
+            <div class="hero__visual" aria-hidden="true">
+                <div class="product-panel">
+                    <div class="product-panel__inner">
+                        <img class="product-logo" src="assets/img/Cypher_Porfolio_Generator-no bg.png" alt="">
+                        <div class="mini-window">
+                            <div class="mini-window__bar"><span></span><span></span><span></span></div>
+                            <div class="mini-window__row"></div>
+                            <div class="mini-window__row"></div>
+                            <div class="mini-window__row"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="features">
+            <h2 class="section-title">Built For Serious First Impressions</h2>
+            <p class="section-intro">A sharper workflow, stronger visuals, and practical export controls for students, developers, freelancers, and creators.</p>
+            <div class="features-grid">
+                <article class="feature-card"><div class="feature-icon"><i class="bx bx-bolt-circle"></i></div><h3>Fast Builder</h3><p>Move from blank page to structured portfolio through a guided step-by-step flow.</p></article>
+                <article class="feature-card"><div class="feature-icon"><i class="bx bx-mobile-alt"></i></div><h3>Responsive Output</h3><p>Generated sites are designed to read cleanly on mobile, tablet, and desktop.</p></article>
+                <article class="feature-card"><div class="feature-icon"><i class="bx bx-palette"></i></div><h3>Brand Controls</h3><p>Tune colors, fonts, spacing, motion, and layout without editing files manually.</p></article>
+                <article class="feature-card"><div class="feature-icon"><i class="bx bx-lock-alt"></i></div><h3>Privacy First</h3><p>Your information stays in the browser. No accounts, tracking dashboards, or data collection.</p></article>
+                <article class="feature-card"><div class="feature-icon"><i class="bx bx-download"></i></div><h3>Downloadable Code</h3><p>Export a complete ZIP and deploy it to GitHub Pages, Netlify, Vercel, or any host.</p></article>
+                <article class="feature-card"><div class="feature-icon"><i class="bx bx-code-curly"></i></div><h3>Clean Foundation</h3><p>Semantic HTML, focused CSS, and simple JavaScript make the output easy to own.</p></article>
+            </div>
+        </section>
+
+        <section class="section" id="templates">
+            <h2 class="section-title">Portfolio Styles</h2>
+            <p class="section-intro">Choose a direction that matches your work, then customize the details inside the generator.</p>
+            <div class="templates-grid">
+                <a href="generate.html" class="template-card">
+                    <div class="template-preview template-preview--light"><div class="template-mock"><div class="template-mock__hero"></div><div class="template-mock__card"></div><div class="template-mock__line"></div></div></div>
+                    <div class="template-info"><h4>Executive</h4><p>Minimal, direct, and confident for professional profiles.</p><span class="template-badge">Free</span></div>
+                </a>
+                <a href="generate.html" class="template-card">
+                    <div class="template-preview"><div class="template-mock"><div class="template-mock__card"></div><div class="template-mock__hero"></div><div class="template-mock__line"></div></div></div>
+                    <div class="template-info"><h4>Creative Grid</h4><p>A bento-inspired layout for projects, skills, and personality.</p><span class="template-badge">Included</span></div>
+                </a>
+                <a href="generate.html" class="template-card">
+                    <div class="template-preview"><div class="template-mock"><div class="template-mock__line"></div><div class="template-mock__card"></div><div class="template-mock__hero"></div></div></div>
+                    <div class="template-info"><h4>Tech Showcase</h4><p>Built for developers, builders, and product-minded portfolios.</p><span class="template-badge">Included</span></div>
+                </a>
+            </div>
+        </section>
+
+        <section class="section" id="pricing">
+            <h2 class="section-title">Simple Pricing</h2>
+            <p class="section-intro">Start free, export freely, and keep ownership of your website files.</p>
+            <div class="pricing-cards">
+                <article class="pricing-card"><h3>Starter</h3><div class="price">Free</div><span class="price-note">Forever</span><ul class="features-list"><li>Portfolio builder</li><li>Responsive export</li><li>Unlimited edits</li><li>ZIP download</li></ul><a href="generate.html" class="btn btn-primary">Get Started</a></article>
+                <article class="pricing-card featured"><h3>Pro</h3><div class="price">$9</div><span class="price-note">Planned</span><ul class="features-list"><li>Advanced templates</li><li>Custom integrations</li><li>Analytics-ready blocks</li><li>Priority improvements</li></ul><a href="contact.html" class="btn btn-primary">Request Access</a></article>
+                <article class="pricing-card"><h3>Team</h3><div class="price">Custom</div><span class="price-note">For groups</span><ul class="features-list"><li>Bulk portfolio creation</li><li>Shared brand presets</li><li>Team support</li><li>Workshop setup</li></ul><a href="contact.html" class="btn btn-secondary">Contact</a></article>
+            </div>
+        </section>
+
+        <section class="section" id="feedback">
+            <h2 class="section-title">What Users Notice</h2>
+            <p class="section-intro">The best portfolio tools should feel calm, quick, and easy to trust.</p>
+            <div class="testimonials">
+                <article class="testimonial"><div class="stars">★★★★★</div><p>"The flow feels focused. I could see what my portfolio needed without getting lost in code."</p><div class="author">Sarah Johnson</div><div class="author-role">Product Designer</div></article>
+                <article class="testimonial"><div class="stars">★★★★★</div><p>"The downloadable ZIP is exactly what I wanted. Simple files, clear structure, no lock-in."</p><div class="author">Marcus Chen</div><div class="author-role">Freelance Developer</div></article>
+                <article class="testimonial"><div class="stars">★★★★★</div><p>"It makes the first version of a portfolio feel achievable, which is half the battle."</p><div class="author">Emily Rodriguez</div><div class="author-role">Creative Director</div></article>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <h2>Build the portfolio you can actually send.</h2>
+            <p>Open the generator, add your profile, connect your socials, and export a professional website that belongs to you.</p>
+            <a href="generate.html" class="btn btn-secondary"><i class="bx bx-right-arrow-alt"></i> Create Portfolio</a>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer__container">
+            <div class="footer__section">
+                <a class="footer__brand" href="index.html"><img src="assets/img/svg/Cypher_Porfolio_Generator-no bg.svg" alt=""><strong>PortfolioGen</strong></a>
+                <p>Privacy-first portfolio generation by Cypher Labs. Build, download, and deploy your own professional website.</p>
+                <div class="footer__social">
+                    <a href="https://github.com/prvthmpcypher" target="_blank" rel="noopener" class="footer__icon" aria-label="GitHub"><i class="bx bxl-github"></i></a>
+                    <a href="https://www.linkedin.com/in/prvthmp" target="_blank" rel="noopener" class="footer__icon" aria-label="LinkedIn"><i class="bx bxl-linkedin"></i></a>
+                    <a href="https://x.com/prvthmp" target="_blank" rel="noopener" class="footer__icon" aria-label="X"><i class="bx bxl-twitter"></i></a>
+                    <a href="https://www.instagram.com/prvthmp" target="_blank" rel="noopener" class="footer__icon" aria-label="Instagram"><i class="bx bxl-instagram"></i></a>
+                </div>
+            </div>
+            <div class="footer__section"><h3>Product</h3><ul><li><a href="templates.html">Templates</a></li><li><a href="generate.html">Generator</a></li><li><a href="index.html#pricing">Pricing</a></li></ul></div>
+            <div class="footer__section"><h3>Legal</h3><ul><li><a href="work.html#privacy">Privacy Policy</a></li><li><a href="work.html#terms">Terms of Service</a></li><li><a href="work.html#community">Community Guidelines</a></li><li><a href="work.html#cookies">Cookie Notice</a></li><li><a href="work.html#security">Security</a></li><li><a href="work.html#license">License</a></li></ul></div>
+            <div class="footer__section"><h3>Profiles</h3><ul><li><a href="https://github.com/prvthmpcypher" target="_blank" rel="noopener">GitHub</a></li><li><a href="https://www.linkedin.com/in/prvthmp" target="_blank" rel="noopener">LinkedIn</a></li><li><a href="https://x.com/prvthmp" target="_blank" rel="noopener">X / Twitter</a></li><li><a href="https://www.instagram.com/prvthmp" target="_blank" rel="noopener">Instagram</a></li></ul></div>
+        </div>
+        <div class="footer__bottom"><div class="footer__copy">&copy; 2026 PortfolioGen by Cypher Labs. All rights reserved.</div><div class="footer__credits">Made by <a href="https://github.com/prvthmpcypher" target="_blank" rel="noopener">Poorvith M P</a></div></div>
+    </footer>
+
+    <script src="assets/js/main.js"></script>
+</body>
+</html>
