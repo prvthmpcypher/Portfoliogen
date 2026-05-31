@@ -3,16 +3,18 @@
 :root {
   --navy: #082c49;
   --navy-2: #041827;
-  --teal: #18b98f;
+  --teal: #0C9B70;
   --teal-2: #38d9b3;
-  --ink: #0c1720;
-  --muted: #667789;
-  --line: #dbe7ec;
-  --surface: #ffffff;
-  --surface-2: #f5faf8;
-  --bg: #f7fbfa;
-  --shadow: 0 24px 70px rgba(8, 44, 73, 0.12);
-  --soft-shadow: 0 14px 40px rgba(8, 44, 73, 0.08);
+  --ink: #0F172A;
+  --muted: #475569;
+  --line: #E2E8F0;
+  --surface: #FFFFFF;
+  --surface-2: #F1F5F9;
+  --bg: #F8FFFE;
+  --shadow: 0 24px 70px rgba(8, 44, 73, 0.10);
+  --soft-shadow: 0 14px 40px rgba(8, 44, 73, 0.06);
+  --glass-bg: rgba(255, 255, 255, 0.70);
+  --glass-border: rgba(255, 255, 255, 0.55);
   --radius: 8px;
   --header-height: 76px;
   --body-font: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -29,6 +31,8 @@ body.dark-theme {
   --bg: #03111d;
   --shadow: 0 24px 70px rgba(0, 0, 0, 0.36);
   --soft-shadow: 0 14px 40px rgba(0, 0, 0, 0.24);
+  --glass-bg: rgba(7, 31, 51, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.10);
 }
 
 *,
@@ -45,7 +49,7 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    linear-gradient(180deg, rgba(24, 185, 143, 0.07), transparent 360px),
+    linear-gradient(180deg, rgba(12, 155, 112, 0.06), transparent 360px),
     var(--bg);
   color: var(--ink);
   font-family: var(--body-font);
@@ -59,8 +63,8 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(8, 44, 73, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(8, 44, 73, 0.045) 1px, transparent 1px);
+    linear-gradient(rgba(8, 44, 73, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(8, 44, 73, 0.04) 1px, transparent 1px);
   background-size: 44px 44px;
   mask-image: linear-gradient(to bottom, black, transparent 78%);
 }
@@ -135,15 +139,17 @@ select {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(8, 44, 73, 0.12);
-  box-shadow: var(--soft-shadow);
-  backdrop-filter: blur(18px);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(226, 232, 240, 0.70);
+  box-shadow: 0 8px 32px rgba(8, 44, 73, 0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   pointer-events: auto;
 }
 
 body.dark-theme .nav {
   background: rgba(7, 31, 51, 0.88);
+  border-color: rgba(255, 255, 255, 0.10);
 }
 
 .nav__brand {
@@ -158,8 +164,8 @@ body.dark-theme .nav {
   height: 42px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(24, 185, 143, 0.35);
-  background: linear-gradient(135deg, rgba(8, 44, 73, 0.08), rgba(24, 185, 143, 0.12));
+  border: 1px solid rgba(12, 155, 112, 0.30);
+  background: linear-gradient(135deg, rgba(8, 44, 73, 0.06), rgba(12, 155, 112, 0.10));
 }
 
 .nav__brand-mark img {
@@ -208,8 +214,8 @@ body.dark-theme .nav {
 .nav__link:hover,
 .nav__link.active-link {
   color: var(--navy);
-  background: rgba(24, 185, 143, 0.12);
-  border-color: rgba(24, 185, 143, 0.22);
+  background: rgba(12, 155, 112, 0.10);
+  border-color: rgba(12, 155, 112, 0.20);
 }
 
 body.dark-theme .nav__link:hover,
@@ -251,7 +257,7 @@ body.dark-theme .nav__link.active-link {
 .nav__toggle:hover,
 .change-theme:hover {
   transform: translateY(-2px);
-  border-color: rgba(24, 185, 143, 0.4);
+  border-color: rgba(12, 155, 112, 0.4);
   color: var(--teal);
 }
 
@@ -310,8 +316,8 @@ main {
   gap: 0.5rem;
   padding: 0.42rem 0.7rem;
   color: var(--navy);
-  background: rgba(24, 185, 143, 0.12);
-  border: 1px solid rgba(24, 185, 143, 0.24);
+  background: rgba(12, 155, 112, 0.10);
+  border: 1px solid rgba(12, 155, 112, 0.22);
   font-size: 0.75rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -374,14 +380,14 @@ body.dark-theme .eyebrow {
 .button {
   color: #ffffff;
   background: linear-gradient(135deg, var(--navy), var(--teal));
-  box-shadow: 0 16px 32px rgba(24, 185, 143, 0.24);
+  box-shadow: 0 16px 32px rgba(12, 155, 112, 0.20);
 }
 
 .btn-primary:hover,
 .button--primary:hover,
 .button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 44px rgba(24, 185, 143, 0.3);
+  box-shadow: 0 20px 44px rgba(12, 155, 112, 0.28);
 }
 
 .btn-secondary,
@@ -389,6 +395,7 @@ body.dark-theme .eyebrow {
   color: var(--navy);
   background: var(--surface);
   border-color: var(--line);
+  box-shadow: 0 2px 8px rgba(8, 44, 73, 0.04);
 }
 
 body.dark-theme .btn-secondary,
@@ -411,7 +418,7 @@ body.dark-theme .change-theme {
 .btn-secondary:hover,
 .button--secondary:hover {
   transform: translateY(-2px);
-  border-color: rgba(24, 185, 143, 0.45);
+  border-color: rgba(12, 155, 112, 0.45);
   color: var(--teal);
 }
 
@@ -434,10 +441,12 @@ body.dark-theme .change-theme {
 .review-card,
 .about-card,
 .metric-card {
-  background: var(--surface);
+  background: var(--glass-bg);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--soft-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .product-panel {
@@ -451,7 +460,7 @@ body.dark-theme .change-theme {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(8, 44, 73, 0.08), rgba(24, 185, 143, 0.18));
+  background: linear-gradient(135deg, rgba(8, 44, 73, 0.06), rgba(12, 155, 112, 0.14));
 }
 
 .product-panel__inner {
@@ -461,9 +470,10 @@ body.dark-theme .change-theme {
   align-content: space-between;
   gap: 1rem;
   padding: 1.25rem;
-  border: 1px solid rgba(24, 185, 143, 0.24);
-  background: rgba(255, 255, 255, 0.58);
-  backdrop-filter: blur(16px);
+  border: 1px solid rgba(12, 155, 112, 0.20);
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 body.dark-theme .product-panel__inner {
